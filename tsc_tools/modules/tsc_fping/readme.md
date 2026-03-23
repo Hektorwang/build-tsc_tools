@@ -1,6 +1,15 @@
 ---
 category: 网络监控
-keywords: [ping, 主机扫描, 连通性, 批量ping, 存活检测, IP段扫描, fping]
+keywords: 
+  - ping
+  - 主机扫描
+  - 连通性
+  - 批量ping
+  - 存活检测
+  - IP段扫描
+  - fping
+description: fping 是一个主机连通性扫描工具,相比于 ping 工具可以批量扫描主机.
+usage: fping [选项] [目标...]
 ---
 
 # fping

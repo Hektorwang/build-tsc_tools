@@ -1,5 +1,0 @@
-{
-  "title": "网卡速度监测",
-  "description": "持续监控指定网卡的收发包速率",
-  "usage": "tsc --tsc_netspeed <interface>"
-}

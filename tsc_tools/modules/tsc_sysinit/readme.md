@@ -1,15 +1,25 @@
 ---
 category: 系统管理
-keywords: [初始化, SSH, 防火墙, 时区, NTP, 服务裁剪, SELinux, 系统参数, 新服务器, 安全加固]
+keywords:
+  - 初始化
+  - SSH
+  - 防火墙
+  - 时区
+  - NTP
+  - 服务裁剪
+  - SELinux
+  - 系统参数
+  - 新服务器
+  - 安全加固
+description: 对于新装完操作系统的服务器进行初始化配置. 因为要修改系统配置, 必须用 `root` 权限执行.
+usage: tsc --tsc_sysinit --help
 ---
 
-# 操作系统初始化工具
+# tsc_sysinit
 
 ## 简介
 
 此工具专为新安装的服务器提供一键式初始化配置, 旨在优化系统性能, 提升安全性并简化日常管理. 由于涉及到系统底层配置, 脚本必须以 `root` 权限执行.
-
----
 
 ## 功能模块
 
@@ -132,8 +142,8 @@ tsc --tsc_sysinit --all --ntp_server=time.windows.com --sshd_port=12345 --no-dis
 | `--config_runlevel`         | 开关 | 设置系统默认启动级别为 `multi-user.target`.                         |
 | `--config_services`         | 开关 | 禁用非核心服务并优化服务列表.                                       |
 | `--config_timezone`         | 开关 | 配置系统时区.                                                       |
-| `--timezone=<时区>`         | 参数 | 指定要设置的时区(例如 `--timezone="Asia/Tokyo"`).                     |
-| `--disable_firewall`         | 开关 | 禁用防火墙服务并清空所有规则.                                       |
+| `--timezone=<时区>`         | 参数 | 指定要设置的时区(例如 `--timezone="Asia/Tokyo"`).                   |
+| `--disable_firewall`        | 开关 | 禁用防火墙服务并清空所有规则.                                       |
 | `--config_ssh`              | 开关 | 配置 ssh 客户端和服务端.                                            |
 | `--sshd_port=<端口>`        | 参数 | 自定义 ssh 服务监听端口(例如 `--sshd_port=2222`).                   |
 | `--ntp_server=<服务器>`     | 参数 | 配置向授时服务器进行时间同步(例如 `--ntp_server=time.windows.com`). |

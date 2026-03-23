@@ -1,8 +1,0 @@
----
-- name: 采集本机 tsc_tools 版本
-  shell:
-    cmd: awk -F '=' '/^Version=/{print $2;exit}' /opt/tsc/release-note
-  register: tsc_tools_version_stdout
-- set_fact: 
-    tsc_tools_version: "{{ tsc_tools_version_stdout.stdout }}"
-

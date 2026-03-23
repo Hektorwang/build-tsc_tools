@@ -1,6 +1,20 @@
 ---
 category: 系统监控
-keywords: [系统信息, 硬件信息, CPU, 内存, 存储, 虚拟机, 物理机, RAID, 运行时, 告警, IaaS]
+keywords: 
+  - 系统信息
+  - 硬件信息
+  - CPU
+  - 内存
+  - 存储
+  - 虚拟机
+  - 物理机
+  - RAID
+  - 运行时
+  - 告警
+  - IaaS
+  - 资产
+description: 输出系统基本信息, 包括`处理器`, `内存`, `存储`, `操作系统版本`, `是否虚拟机`等, 并保存到 `/var/log/tsc_iaas_info.json`
+usage: tsc --tsc_iaas_info [参数]
 ---
 
 # tsc_iaas_info

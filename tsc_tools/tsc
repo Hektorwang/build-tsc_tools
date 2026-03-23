@@ -23,7 +23,8 @@ function load_registered_modules() {
     local module
     if [[ -d "${modules_dir}" ]]; then
         for dir in "${modules_dir}"/*/; do
-            if [[ -f "${dir}/module.json" ]]; then
+            # if [[ -f "${dir}/module.json" ]]; then
+            if [[ -f "${dir}/run.sh" ]] || [[ -f "${dir}/run" ]]; then
                 module="$(basename "$dir")"
                 module_names+=("$module")
                 registered_modules_map["$module"]=1
@@ -93,10 +94,10 @@ function run_module_with_args() {
 function read_module_metadata() {
     local module_name="$1"
     local module_dir="${WORK_DIR}/modules/${module_name}"
-    local meta_file="${module_dir}/module.json"
+    local meta_file="${module_dir}/readme.md"
 
     if [[ -f "${meta_file}" ]]; then
-        jq . -r "${meta_file}"
+        awk 'BEGIN{c=0} /^---$/{c++; if(c==1){next}; if(c==2){exit}} c==1' "${meta_file}" 
     else
         return 1
     fi
@@ -107,15 +108,13 @@ function show_global_help() {
     echo " $(basename "$0") [--module] <module_args> <--module> <--module> <module_args>"
     echo ""
     echo "Available modules:"
-    local meta title description
+    local meta description
 
     for module in "${!registered_modules_map[@]}"; do
         meta=$(read_module_metadata "${module}" 2>/dev/null)
-        title=$(echo "${meta}" | jq -r '.title // empty')
-        description=$(echo "${meta}" | jq -r '.description // empty')
-        usage=$(echo "${meta}" | jq -r '.usage // empty')
+        description=$(echo "${meta}" | grep -oP  '(?<=^description: ).*$')
+        usage=$(echo "${meta}" | grep -oP  '(?<=^usage: ).*$')
         echo "  --${module}"
-        echo "      ${title}"
         echo "      ${description}"
         [[ -n "${usage}" ]] && echo "      ${usage}"
     done

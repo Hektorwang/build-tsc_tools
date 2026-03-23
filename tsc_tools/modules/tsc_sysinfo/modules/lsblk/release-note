@@ -1,9 +1,0 @@
-# lsblk
-
-Version=1.0.1
-Date=2231130
-
-- fix: 修复输出目录问题.
-  Version=1.0.0
-  Date=2231116
-- init: 新建项目

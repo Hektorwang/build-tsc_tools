@@ -1,6 +1,18 @@
 ---
 category: 系统监控
-keywords: [进程, 监控, CPU, 内存, swap, fd, iowait, 进程状态, 运行环境, 故障排查]
+keywords:
+  - 进程
+  - 监控
+  - CPU
+  - 内存
+  - swap
+  - fd
+  - iowait
+  - 进程状态
+  - 运行环境
+  - 故障排查
+description: 主要用于监听进程的运行状态和服务器的运行环境, 方便获取进程不定时出现问题时的运行环境.
+usage: tsc --tsc_monitor_run_stat <PID/PNAME> <process_pattern> <delay_interva>
 ---
 
 # tsc_monitor_run_stat

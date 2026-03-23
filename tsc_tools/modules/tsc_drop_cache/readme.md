@@ -1,9 +1,17 @@
 ---
 category: 系统管理
-keywords: [内存, 缓存, 释放, drop_cache, 内存压力, 系统优化]
+keywords: 
+  - 内存
+  - 缓存
+  - 释放
+  - drop_cache
+  - 内存压力
+  - 系统优化
+description: 通过 `echo 3 > /proc/sys/vm/drop_caches` 手动释放内存缓存, 以缓解系统压力. 效果取决于系统可释放的缓存.
+usage: tsc --drop_cache [释放阈值]
 ---
 
-# drop_cache
+# tsc_drop_cache
 
 ## 功能说明
 

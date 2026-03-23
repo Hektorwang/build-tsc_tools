@@ -1,5 +1,0 @@
-{
-  "title": "检测系统IaaS信息",
-  "description": "输出系统基本信息, 包括`处理器`, `内存`, `存储`, `操作系统版本`, `是否虚拟机`等, 并保存到 `/var/log/tsc_iaas_info.json`",
-  "usage": "查看 readme.md"
-}

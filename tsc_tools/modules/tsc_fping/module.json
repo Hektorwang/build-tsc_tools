@@ -1,4 +1,0 @@
-{
-  "title": "fping",
-  "description": "`fping` 是一个主机连通性扫描工具,相比于 `ping` 工具可以批量扫描主机."
-}

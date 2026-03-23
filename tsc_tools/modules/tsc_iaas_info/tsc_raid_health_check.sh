@@ -11,6 +11,7 @@ LD_KEYWORDS=(
     "Offline|严重(离线)"
     "OfLn|严重(离线)"
     "Impacted|告警(条带化错误)"
+    "InterimRecovery|告警(尝试临时恢复)"
     "Rebuild|告警(正在重建)"
     "Degraded|告警(被降级)"
     "Pdgd|告警(部分降级)"

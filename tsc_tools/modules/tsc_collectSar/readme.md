@@ -1,11 +1,24 @@
 ---
 category: 系统监控
-keywords: [sar, 资源对比, 性能对比, CPU, 内存, 磁盘IO, 网络, 历史数据, 测试前后对比]
+keywords:
+  - sar
+  - 资源对比
+  - 性能对比
+  - CPU
+  - 内存
+  - 磁盘IO
+  - 网络
+  - 历史数据
+  - 测试前后对比
+description: 对比给定的两个时间点的系统资源使用情况
+usage: tsc --tsc_collect_sar [install|compare|uinstall] [参数]
 ---
 
-# Release-note
+# tsc_collectSar
 
 功能说明
+
+对比给定的两个时间点的系统资源使用情况
 
 1. 修改 sar 取值频率,修改为 1 分钟一次;并备份 sa 文件到/home/fox/CollectSar/BackSar/目录下;
 2. 以小时为单位,对比指定日期同时间段的 CPU,内存,磁盘 IO,网络(通讯口)的比率;

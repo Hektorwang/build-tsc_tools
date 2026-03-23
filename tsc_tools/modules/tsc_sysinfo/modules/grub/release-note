@@ -1,8 +1,0 @@
-# lscpu
-Version=1.0.1
-Date=20231121
-  feat: 增加采集 /proc/cmdline
-
-Version=1.0.0
-Date=20231117
-  init: 新建项目

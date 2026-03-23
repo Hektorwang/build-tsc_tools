@@ -1,29 +1,32 @@
 # release-note
 
-## Version=2.0.3.beta8
+## Version=2.0.3.beta9
 
-20260603
+1. chore: 将 `jq` 从源码编译版替换为官方 release 二进制版
+2. fix: 修复安装 `arcconf` 时判断错误问题
+3. fix: 修复 `arcconf` 的raid卡的vd状态为 `InterimRecovery` 无法识别的问题
+4. feat(`gen_req.sh`): 生成 rag 友好的文档 `rag.md`
+5. TODO: 将 `func` 替换为 `tsc_utils`
+6. TODO: 将 `tsc_iaas_info` 模块拆分, 以方便开发维护, 并增加处理器和内存变动告警
+
+## Version=2.0.3.beta8
 
 1. fix(tsc_iaas_info): findmnt 在 el7 下不支持 `-U` 参数, 删除该参数
 2. fix(tsc_iaas_info): grep -c 在找不到 pattern 时返回 false, 影响计数, 修改为用 awk 计数
 3. fix(tsc_iaas_info): 修复了 runtime 函数在不带 raid 的 pm 上运行的很多问题
 4. fix(tsc_iaas_info): 修复了在 `MegaRaid 9560-16i` 下运行问题
 5. fix(tsc_iaas_info): 修复了在 `UN Adaptec RAID P460-M2` 下运行问题
-6. fix(tsc_iaas_info): 修复在 el7 下计算磁盘变更问题
+6. fix(tsc_iaas_info): 修复在 el7 下计算磁盘数量变更问题
 
 ## Version=2.0.3.beta7
 
-20260202
-
 1. fix(tsc_sysinit): 解决 ssh 注入配置时定制化配置文件不存在时报错退出问题, 因EL7自带的sshd不支持 Include, 直接改成将参数写入主配置.
-2. fix(tsc_sysinit): 解决sar配置时未消除默认stdout问题
+2. fix(tsc_sysinit): 解决 sar 配置时未消除默认 stdout 问题
 3. fix(tsc_sysinit): 解决配置 rc-local.service 时未注入启动级问题
 4. fix(func): 解决了 backup_dir_with_rotation 函数使用了 bash 4.3不支持语法问题
 5. fix(build.sh): 集成包去掉将 README.md 作为帮助的功能, 因为其中带了 markdown 语法影响集成包运行
 
 ## Version=2.0.3.beta6
-
-20251203
 
 1. feat(`tsc_iaas_info`): 增加读取旧日志文件, 若磁盘数量不一致则告警功能
 2. fix(`tsc_iaas_info`): 修复 `lsi` 卡下的一堆执行问题.
@@ -31,8 +34,6 @@
 4. TODO: 在 `arcconf` 和 `mpt3sas` 的 raid 卡下进行测试
 
 ## Version=2.0.3.beta5
-
-20251121
 
 1. fix(`tsc_iaas_info`): 修复了在 lsi 卡上取 pd 错误的问题.
 2. TODO(`tsc_iaas_info`): pd 数量对比告警功能.

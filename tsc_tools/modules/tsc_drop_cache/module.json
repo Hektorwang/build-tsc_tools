@@ -1,5 +1,0 @@
-{
-  "title": "释放系统内存缓存",
-  "description": "通过 `echo 3 > /proc/sys/vm/drop_caches` 手动释放内存缓存, 以缓解系统压力. 效果取决于系统可释放的缓存.",
-  "usage": "--drop_cache [释放阈值] # 可选参数, 释放阈值(int), 默认内存使用率超过 80% 时释放"
-}

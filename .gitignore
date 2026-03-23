@@ -3,5 +3,8 @@ __pycache__
 /.vscode
 /release
 /tmp
+rag.md
+/tsc_tools/README.md
+/tsc_tools/release-note.md
 storcli.log
 !.gitignore

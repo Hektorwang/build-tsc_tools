@@ -1,9 +1,19 @@
 ---
 category: 网络监控
-keywords: [网卡, 流量, 监控, 速率, 带宽, 收发包, 网络性能, interface]
+keywords: 
+  - 网卡
+  - 流量
+  - 监控
+  - 速率
+  - 带宽
+  - 收发包
+  - 网络性能
+  - interface
+description: 持续监控指定网卡的收发包速率
+usage: tsc --tsc_netspeed <interface>
 ---
 
-# 网卡速度监测
+# tsc_netspeed
 
 ## 功能说明
 

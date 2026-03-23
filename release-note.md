@@ -1,5 +1,14 @@
 # release-note
 
+## Version=2.0.3.beta9
+
+1. chore: 将 `jq` 从源码编译版替换为官方 release 二进制版
+2. fix: 修复安装 `arcconf` 时判断错误问题
+3. fix: 修复 `arcconf` 的raid卡的vd状态为 `InterimRecovery` 无法识别的问题, 将该状态识别为 `尝试临时恢复`
+4. feat(`gen_req.sh`): 生成 rag 友好的文档 `rag.md`, 同时更新所有模块的 readme.md, 删除 module.json, 并修改 tsc 遍历模块元数据的方式
+5. TODO: 将 `func` 替换为 `tsc_utils`
+6. TODO: 将 `tsc_iaas_info` 模块拆分, 以方便开发维护, 并增加处理器和内存变动告警
+
 ## Version=2.0.3.beta8
 
 1. fix(tsc_iaas_info): findmnt 在 el7 下不支持 `-U` 参数, 删除该参数

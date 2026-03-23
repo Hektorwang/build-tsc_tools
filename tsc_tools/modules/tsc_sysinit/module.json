@@ -1,5 +1,0 @@
-{
-  "title": "操作系统初始化工具",
-  "description": "对于新装完操作系统的服务器进行初始化配置. 因为要修改系统配置, 必须用 `root` 权限执行.",
-  "usage": "tsc --tsc_sysinit --help"
-}

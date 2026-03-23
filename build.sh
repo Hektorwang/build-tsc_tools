@@ -21,6 +21,8 @@ RELEASE_FILE="${RELEASE_DIR}/tsc_tools-${version}-noarch-${createdate}.sh"
 rm -rf "${PACKAGE_SOURCE_DIR}"
 mkdir -p "${PACKAGE_SOURCE_DIR}"
 
+# 生成 rag 友好的文档
+"${PROJECT_DIR}"/gen_rag.sh
 # 将需要打包的文件和目录复制到临时目录
 \cp "${PROJECT_DIR}"/README.md "${PROJECT_DIR}"/tsc_tools/
 \cp "${PROJECT_DIR}"/release-note.md "${PROJECT_DIR}"/tsc_tools/
