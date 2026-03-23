@@ -1,3 +1,8 @@
+---
+category: 系统管理
+keywords: [内存, 缓存, 释放, drop_cache, 内存压力, 系统优化]
+---
+
 # drop_cache
 
 ## 功能说明

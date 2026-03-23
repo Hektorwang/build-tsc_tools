@@ -1,3 +1,8 @@
+---
+category: 系统监控
+keywords: [系统信息, 硬件信息, CPU, 内存, 存储, 虚拟机, 物理机, RAID, 运行时, 告警, IaaS]
+---
+
 # tsc_iaas_info
 
 ## 功能说明

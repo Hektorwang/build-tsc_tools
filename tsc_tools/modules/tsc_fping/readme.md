@@ -1,3 +1,8 @@
+---
+category: 网络监控
+keywords: [ping, 主机扫描, 连通性, 批量ping, 存活检测, IP段扫描, fping]
+---
+
 # fping
 
 ## 功能说明

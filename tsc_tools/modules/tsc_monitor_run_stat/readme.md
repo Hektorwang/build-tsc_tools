@@ -1,3 +1,8 @@
+---
+category: 系统监控
+keywords: [进程, 监控, CPU, 内存, swap, fd, iowait, 进程状态, 运行环境, 故障排查]
+---
+
 # tsc_monitor_run_stat
 
 ## 功能说明
