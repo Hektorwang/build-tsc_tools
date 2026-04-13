@@ -328,6 +328,7 @@ LoginGraceTime 60
 UseDNS no
 AllowTcpForwarding yes
 GatewayPorts yes
+END: TSC
 EOF
     if [[ -n "${_arg_sshd_port}" ]]; then
         if ! [[ "${_arg_sshd_port}" =~ ^[1-9][0-9]*$ ]] ||
@@ -335,9 +336,9 @@ EOF
             LOGERROR "Invalid sshd port: ${_arg_sshd_port}"
             return 1
         fi
+        sed -ri '/^\s*Port\s+[0-9]+/d' "${sshd_server_config}"
         echo "Port ${_arg_sshd_port}" >>"${sshd_server_config}"
     fi
-    echo "# END: TSC" >>"${sshd_server_config}"
     LOGINFO "SSH server configuration written to ${sshd_server_config}"
 
     LOGINFO "Restarting SSH server"

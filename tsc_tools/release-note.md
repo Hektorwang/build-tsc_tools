@@ -1,5 +1,9 @@
 # release-note
 
+## Version=2.0.3.beta10
+
+1. fix(`tsc_sysinit`): 修复了重复初始化会覆盖此前初始化的 sshd_port 问题.
+
 ## Version=2.0.3.beta9
 
 1. chore: 将 `jq` 从源码编译版替换为官方 release 二进制版
