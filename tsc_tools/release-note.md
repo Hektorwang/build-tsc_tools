@@ -2,7 +2,7 @@
 
 ## Version=2.0.3.beta10
 
-1. fix: 修复 `tsc_sysinit` 当未指定 sshd 端口时, 会覆盖掉原来修改过的端口的问题
+1. fix: 修复 `tsc_sysinit` 当未指定 `sshd_port` 时会覆盖掉原来修改过的端口配置问题
 
 ## Version=2.0.3.beta9
 

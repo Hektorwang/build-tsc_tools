@@ -61,6 +61,7 @@ detect_system_info() {
         [fitstarryskyos]="Euler"
         [openeuler]="Euler"
         [hce]="Euler"
+        [ningos]="Euler"
     )
 
     [[ -f /etc/os-release ]] && source /etc/os-release
@@ -154,11 +155,11 @@ check_env() {
         ret=127
     fi
 
-    IFS=',' read -r -a supported_service_mgrs_array <<<"$SUPPORTED_SERVICE_MANAGER"
-    if ! is_element_in_array "$current_service_mgr" "${supported_service_mgrs_array[@]}"; then
-        LOGERROR "Service manager not supported: Current service manager '${current_service_mgr}' is not in the supported list '${SUPPORTED_SERVICE_MANAGER}'."
-        ret=127
-    fi
+    # IFS=',' read -r -a supported_service_mgrs_array <<<"$SUPPORTED_SERVICE_MANAGER"
+    # if ! is_element_in_array "$current_service_mgr" "${supported_service_mgrs_array[@]}"; then
+    #     LOGERROR "Service manager not supported: Current service manager '${current_service_mgr}' is not in the supported list '${SUPPORTED_SERVICE_MANAGER}'."
+    #     ret=127
+    # fi
 
     local distro_version_check_passed=false
     local distro_rule_var_name="DISTRO_VERSION_RULES_${current_distro_variety}"
