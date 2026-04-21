@@ -311,16 +311,6 @@ EOF
     sed -E -i '/^[[:space:]]*UseDNS/d' "${sshd_server_config}"
     sed -E -i '/^[[:space:]]*AllowTcpForwarding/d' "${sshd_server_config}"
     sed -E -i '/^[[:space:]]*GatewayPorts/d' "${sshd_server_config}"
-    sed -E -i '/^[[:space:]]*Port/d' "${sshd_server_config}"
-    # sed -E -i '/^[[:space:]]*Include[[:space:]]+'${server_include_file}'/d' "${sshd_server_config}"
-    # sed -E -i '\#^[[:space:]]*Include[[:space:]]+'${server_include_file}'#d' "${sshd_server_config}"
-    # if ! grep -qE "^[[:space:]]*Include[[:space:]]+${server_include_file}\b" "${sshd_server_config}"; then
-    #     echo "Include ${server_include_file}" >>"${sshd_server_config}"
-    #     LOGINFO "Added Include directive for ${server_include_file}"
-    # else
-    #     LOGINFO "Include directive for ${server_include_file} already exists"
-    # fi
-    # [[ -s "${server_include_file}" ]] && sed -E -i '/# START: TSC/,/# END: TSC/d' "${server_include_file}"
     sed -E -i '/# START: TSC/,/# END: TSC/d' "${sshd_server_config}"
     cat <<EOF >>"${sshd_server_config}"
 # START: TSC
@@ -328,7 +318,7 @@ LoginGraceTime 60
 UseDNS no
 AllowTcpForwarding yes
 GatewayPorts yes
-END: TSC
+# END: TSC
 EOF
     if [[ -n "${_arg_sshd_port}" ]]; then
         if ! [[ "${_arg_sshd_port}" =~ ^[1-9][0-9]*$ ]] ||
@@ -341,8 +331,8 @@ EOF
     fi
     LOGINFO "SSH server configuration written to ${sshd_server_config}"
 
+    sleep 5
     LOGINFO "Restarting SSH server"
-    sleep 1
     local service_name=""
     if systemctl list-unit-files --type=service --no-pager --full |
         grep -qE "^sshd.service\b"; then
