@@ -98,8 +98,10 @@ _install_raid_cli() {
         LOGSUCCESS "Installed /bin/storcli64 /bin/storcli"
     fi
     local arcconf_output
+    set +e
     arcconf_output=$("${BINARY_TOOLS_DIR}/arcconf/arcconf-$(arch)" GETCONFIG 1 PD 2>&1)
     exit_code=$?
+    set -e
     if [[ ${exit_code} -eq 0 ]] && ! echo "${arcconf_output}" | grep -q "Controllers found: 0"; then
         \cp "${BINARY_TOOLS_DIR}/arcconf/arcconf-$(arch)" /bin/arcconf
         chmod +x /bin/arcconf

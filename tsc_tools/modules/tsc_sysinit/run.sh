@@ -366,6 +366,8 @@ config_services() {
         # ["chronyd.service"]=1
         ["crond.service"]=1
         ["getty@.service"]=1
+        ["dbus.service"]=1
+        ["dbus.socket"]=1
         ["ipmi.service"]=1
         ["irqbalance.service"]=1
         ["lm_sensors.service"]=1

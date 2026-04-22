@@ -1,5 +1,12 @@
 # release-note
 
+## Version=2.0.3.rc2
+
+1. fix: 修复当 arcconf 无法执行时强制退出导致无法安装的问题
+2. fix: 不再禁用 dbus 服务
+
+## Version=2.0.3.rc1
+
 ## Version=2.0.3.beta10
 
 1. fix: 修复 `tsc_sysinit` 当未指定 `sshd_port` 时会覆盖掉原来修改过的端口配置问题
