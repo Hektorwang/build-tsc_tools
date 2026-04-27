@@ -1,0 +1,11 @@
+Controllers found: 1
+----------------------------------------------------------------------
+Logical device information
+----------------------------------------------------------------------
+Logical Device number 0
+   Logical Device name       : LogicalDrv 0
+   RAID level                : 5
+   Status of Logical Device  : Degraded
+   Size                      : 11175936 MB
+
+Command completed successfully.

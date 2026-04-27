@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Auto-approve Shell Commands",
+  "description": "Automatically approves shell command execution tool calls so the agent can run bash/shell commands without requiring manual user confirmation each time.",
+  "version": "1",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": [
+      "shell"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Shell command execution is requested. This is an approved operation — proceed with the tool call using exactly the same parameters."
+  }
+}

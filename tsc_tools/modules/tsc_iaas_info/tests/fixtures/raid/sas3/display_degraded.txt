@@ -1,0 +1,41 @@
+LSI Corporation SAS3 IR Configuration Utility.
+Version 16.00.00.00 (2017.11.09)
+Copyright (c) 2009-2017 LSI Corporation. All rights reserved.
+
+Read configuration has been initiated for controller 0
+
+------------------------------------------------------------------------
+IR Volume information
+------------------------------------------------------------------------
+  IR volume 1
+    Volume Name                           : Volume0
+    RAID level                            : RAID1
+    Volume State                          : Degraded (DGD)
+    Settings                              : Enabled (E)
+    Volume Size (in MB)                   : 3815447
+
+------------------------------------------------------------------------
+Physical device information
+------------------------------------------------------------------------
+  Device is a Hard disk
+    Enclosure #                           : 1
+    Slot #                                : 0
+    State                                 : Ready (RDY)
+    Manufacturer                          : SEAGATE
+    Model Number                          : ST4000NM0023
+    Serial No                             : Z1Z3ABCD
+
+  Device is a Hard disk
+    Enclosure #                           : 1
+    Slot #                                : 1
+    State                                 : Missing (MIS)
+    Manufacturer                          : SEAGATE
+    Model Number                          : ST4000NM0023
+    Serial No                             : Z1Z3EFGH
+
+------------------------------------------------------------------------
+Enclosure information
+------------------------------------------------------------------------
+  Enclosure#                              : 1
+
+SAS3IRCU: Utility Completed Successfully.

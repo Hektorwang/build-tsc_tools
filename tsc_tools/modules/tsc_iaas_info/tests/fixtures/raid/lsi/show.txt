@@ -1,0 +1,16 @@
+CLI Version = 007.1703.0000.0000 May 10, 2019
+Operating system = Linux 4.18.0-305.el8.x86_64
+Status Code = 0
+Status = Success
+Description = None
+
+Number of Controllers = 1
+Host Name = server01
+Operating System  = Linux 4.18.0-305.el8.x86_64
+
+System Overview :
+========================================================================
+Ctl Model         Ports PDs DGs DNOpt VDs VNOpt BBU sPR DS  EHS ASOs Hlth
+  0 AVG-9361-8i       8   4   1     0   1     0 Opt  On  1-4 Y    3  Opt
+========================================================================
+

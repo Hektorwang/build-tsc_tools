@@ -1,0 +1,3 @@
+Module                  Size  Used by
+mpt2sas               319488  0
+scsi_transport_sas     45056  1 mpt2sas

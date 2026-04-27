@@ -1,0 +1,60 @@
+Controllers found: 1
+----------------------------------------------------------------------
+Controller information
+----------------------------------------------------------------------
+   Controller ID             : 0
+   Controller Model          : Adaptec 7805
+
+----------------------------------------------------------------------
+Physical Device information
+----------------------------------------------------------------------
+      Device #0
+         Device is a Hard drive
+         State                              : Online,SpunUp
+         Supported                          : Yes
+         Transfer Speed                     : SAS 6.0 Gb/s
+         Reported Channel,Device(T:L)       : 0,0(0:0)
+         Reported Location                  : Enclosure 0, Slot 0
+         Vendor                             : SEAGATE
+         Model                             : ST900MM0168
+         Firmware                           : CN03
+         Serial number                      : W1234567
+         Size                               : 857,375 MB
+         Write Cache                        : Enabled (write-back)
+         FRU                                : None
+         S.M.A.R.T.                         : No
+         Power State                        : Full rpm
+      Device #1
+         Device is a Hard drive
+         State                              : Online,SpunUp
+         Supported                          : Yes
+         Transfer Speed                     : SAS 6.0 Gb/s
+         Reported Channel,Device(T:L)       : 0,1(1:0)
+         Reported Location                  : Enclosure 0, Slot 1
+         Vendor                             : SEAGATE
+         Model                             : ST900MM0168
+         Firmware                           : CN03
+         Serial number                      : W2345678
+         Size                               : 857,375 MB
+         Write Cache                        : Enabled (write-back)
+         FRU                                : None
+         S.M.A.R.T.                         : No
+         Power State                        : Full rpm
+      Device #2
+         Device is a Hard drive
+         State                              : Online,SpunUp
+         Supported                          : Yes
+         Transfer Speed                     : SAS 6.0 Gb/s
+         Reported Channel,Device(T:L)       : 0,2(2:0)
+         Reported Location                  : Enclosure 0, Slot 2
+         Vendor                             : SEAGATE
+         Model                             : ST900MM0168
+         Firmware                           : CN03
+         Serial number                      : W3456789
+         Size                               : 857,375 MB
+         Write Cache                        : Enabled (write-back)
+         FRU                                : None
+         S.M.A.R.T.                         : No
+         Power State                        : Full rpm
+
+Command completed successfully.

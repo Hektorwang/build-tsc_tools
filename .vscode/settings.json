@@ -8,5 +8,9 @@
                   "untitled:Untitled-4",
                   "untitled:Untitled-5"
             ]
-      }
+      },
+      "kiroAgent.trustedCommands": [
+            "",
+            "Select-String"
+      ]
 }

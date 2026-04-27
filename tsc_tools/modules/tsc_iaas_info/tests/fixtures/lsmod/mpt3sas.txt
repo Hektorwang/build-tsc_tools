@@ -1,0 +1,4 @@
+Module                  Size  Used by
+mpt3sas               319488  0
+scsi_transport_sas     45056  1 mpt3sas
+raid_class             16384  1 mpt3sas

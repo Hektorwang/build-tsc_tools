@@ -41,7 +41,7 @@ mkdir -p /var/log/tsc/
 check_env() {
     LOGINFO "${FUNCNAME[0]}"
     local ret=0
-    if [ "$EUID" != "0" ]; then
+    if [[ "$EUID" != "0" ]]; then
         LOGERROR "Insufficient privileges: Script must be run with root privilege."
         ret=255
     fi
