@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
 
-set -o errexit
+# set -o errexit
 set -o nounset
 set -o pipefail
 set +o posix

@@ -1,5 +1,9 @@
 # release-note
 
+## Version=2.0.3.rc3
+
+1. fix: 修改 sshd 配置后 reload 而非 restart 服务
+
 ## Version=2.0.3.rc2
 
 1. fix: 修复当 arcconf 无法执行时强制退出导致无法安装的问题

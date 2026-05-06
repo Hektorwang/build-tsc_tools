@@ -176,19 +176,8 @@ EOF
 
     sleep 5
     LOGINFO "Restarting SSH server"
-    local service_name=""
-    if systemctl list-unit-files --type=service --no-pager --full |
-        grep -qE "^sshd.service\b"; then
-        service_name="sshd"
-    elif systemctl list-unit-files --type=service --no-pager --full |
-        grep -qE "^ssh.service\b"; then
-        service_name="ssh"
-    else
-        LOGERROR "SSH service not found"
-        return 1
-    fi
-    if ! systemctl restart "${service_name}.service" &>/dev/null; then
-        LOGERROR "Failed to restart ${service_name}.service"
+    if ! systemctl reload "sshd.service" &>/dev/null; then
+        LOGERROR "Failed to reload sshd.service"
         return 1
     fi
     LOGSUCCESS "${FUNCNAME[0]}"

@@ -216,6 +216,7 @@ _install() {
             sed -i "1r ${SOURCE_TSC_PROFILE}" "${DEST_TSC_PROFILE}"
         fi
     fi
+    mkdir -p /var/log/tsc
     LOGSUCCESS "${FUNCNAME[0]}"
 }
 
