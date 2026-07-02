@@ -173,8 +173,8 @@ generate_hardware_change_alerts() {
 
     # 告警 key: pd_cnt_diffrent — 触发条件: 当前 RAID 盘数量（type=="raid"）与历史日志不一致
     local pd_cnt ori_pd_cnt
-    pd_cnt="$(echo "${current_json}" | jq '[.storage[]? | select(.type=="raid")] | length')"
-    ori_pd_cnt="$(jq '[.storage[]? | select(.type=="raid")] | length' "${logfile}")"
+    pd_cnt="$(echo "${current_json}" | jq '[.storage[][]? | select(.type=="raid")] | length')"
+    ori_pd_cnt="$(jq '[.storage[][]? | select(.type=="raid")] | length' "${logfile}")"
     if [[ "${pd_cnt}" != "${ori_pd_cnt}" ]]; then
         warnings="$(echo "${warnings}" | jq \
             --arg cur "${pd_cnt}" --arg ori "${ori_pd_cnt}" \
@@ -183,8 +183,8 @@ generate_hardware_change_alerts() {
 
     # 告警 key: direct_disk_cnt_diffrent — 触发条件: 当前直通盘数量（type=="direct"）与历史日志不一致
     local direct_disk_cnt ori_direct_disk_cnt
-    direct_disk_cnt="$(echo "${current_json}" | jq '[.storage[]? | select(.type=="direct")] | length')"
-    ori_direct_disk_cnt="$(jq '[.storage[]? | select(.type=="direct")] | length' "${logfile}")"
+    direct_disk_cnt="$(echo "${current_json}" | jq '[.storage[][]? | select(.type=="direct")] | length')"
+    ori_direct_disk_cnt="$(jq '[.storage[][]? | select(.type=="direct")] | length' "${logfile}")"
     if [[ "${direct_disk_cnt}" != "${ori_direct_disk_cnt}" ]]; then
         warnings="$(echo "${warnings}" | jq \
             --arg cur "${direct_disk_cnt}" --arg ori "${ori_direct_disk_cnt}" \

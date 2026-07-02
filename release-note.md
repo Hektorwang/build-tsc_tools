@@ -1,5 +1,9 @@
 # release-note
 
+## Version=2.0.5
+
+1. fix(tsc_tools/modules/tsc_iaas_info/lib/alert.sh): 修复了读取数据中 storage 存储层级问题
+
 ## Version=2.0.4
 
 1. fix:(tsc_iaas_info/lib/monitors/cpu.sh): 修复 bash-4.2 的 `$(())` 中不能包含注释的问题(删掉了注释)
