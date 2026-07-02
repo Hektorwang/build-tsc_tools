@@ -30,7 +30,7 @@ _test_writability() {
     local temp_file
 
     # 尝试在挂载点创建临时文件，文件名前缀 test_rw_tsc 便于识别
-    temp_file=$(mktemp "${mount_point}/test_rw_tsc" 2>/dev/null) || return 1
+    temp_file=$(mktemp "${mount_point}/test_rw_tsc_XXXXXX" 2>/dev/null) || return 1
 
     # 立即删除临时文件，不留痕迹
     unlink "$temp_file" &>/dev/null

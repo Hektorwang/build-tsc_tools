@@ -1,5 +1,5 @@
 # TSC_TOOLS: START
-if [[ ":$PATH:" != *":/home/tsc/tsc_tools:"* ]]; then
-  export PATH="/home/tsc/tsc_tools/:$PATH"
+if [[ ":$PATH:" != *":/home/tsc/tsc_tools/bin/:"* ]]; then
+  export PATH="/home/tsc/tsc_tools/bin/:/home/tsc/tsc_tools/:$PATH"
 fi
 # TSC_TOOLS: END

@@ -24,49 +24,64 @@ readonly INVALID_SNS=('1234567890' '01234567890' '0000000000' 'To be filled by O
 # 使用方: 遍历数组，用 ${keyword%%|*} 取英文部分做 grep，${keyword##*|} 取中文描述
 # -----------------------------------------------------------------------------
 readonly LD_KEYWORDS=(
-    "Offline|严重(离线)"
-    "OfLn|严重(离线)"
-    "Impacted|告警(条带化错误)"
-    "InterimRecovery|告警(尝试临时恢复)"
-    "Rebuild|告警(正在重建)"
-    "Degraded|告警(被降级)"
-    "Pdgd|告警(部分降级)"
-    "Dgrd|告警(被降级)"
-    "Optimal|信息(正常)"
-    "OK|信息(正常)"
-    "Optl|信息(正常)"
-    "Online|信息(在线)"
+  "Offline|严重(离线)"
+  "OfLn|严重(离线)"
+  "Impacted|告警(条带化错误)"
+  "InterimRecovery|告警(尝试临时恢复)"
+  "Rebuild|告警(正在重建)"
+  "Degraded|告警(被降级)"
+  "Pdgd|告警(部分降级)"
+  "Dgrd|告警(被降级)"
+  "Optimal|信息(正常)"
+  "OK|信息(正常)"
+  "Optl|信息(正常)"
+  "Online|信息(在线)"
 )
+
+
+# 生成状态映射数组
+LD_KEYWORDS_MAP=""
+for kw in "${LD_KEYWORDS[@]}"; do
+  LD_KEYWORDS_MAP+="${kw%%|*}|${kw##*|}\n"
+done
+unset kw
 
 # -----------------------------------------------------------------------------
 # PD_KEYWORDS — PD（物理磁盘）状态关键字映射表
 # 格式同 LD_KEYWORDS，按严重级别从高到低排列
 # -----------------------------------------------------------------------------
 readonly PD_KEYWORDS=(
-    "Offln|严重(离线)"
-    "Failed|严重(损坏)"
-    "Offline|严重(离线)"
-    "Unconfigured(bad)|告警(已坏未使用)"
-    "Rebuild|告警(正在重建)"
-    "Foreign|告警(含阵列配置的待用盘)"
-    "Rbld|告警(正在重建)"
-    "UBad|告警(已坏未使用)"
-    "DHS|信息(热备盘)"
-    "GHS|信息(全局热备盘)"
-    "Hot Spare|信息(热备盘)"
-    "Hotspare,Spundown|信息(热备盘)"
-    "JBOD|信息(正常)"
-    "OK|信息(正常)"
-    "Online,SpunUp|信息(在线)"
-    "Online|信息(在线)"
-    "Onln|信息(在线)"
-    "Optimal|信息(正常)"
-    "Raw|信息(直通盘)"
-    "Ready|信息(未配置Raid)"
-    "Sntze|信息(清洁状态)"
-    "UGood|信息(未格式化待用)"
-    "Unconfigured(good)|信息(未格式化待用)"
+  "Offln|严重(离线)"
+  "Failed|严重(损坏)"
+  "Offline|严重(离线)"
+  "Unconfigured(bad)|告警(已坏未使用)"
+  "Rebuild|告警(正在重建)"
+  "Foreign|告警(含阵列配置的待用盘)"
+  "Rbld|告警(正在重建)"
+  "UBad|告警(已坏未使用)"
+  "DHS|信息(热备盘)"
+  "GHS|信息(全局热备盘)"
+  "Hot Spare|信息(热备盘)"
+  "Hotspare,Spundown|信息(热备盘)"
+  "JBOD|信息(正常)"
+  "OK|信息(正常)"
+  "Online,SpunUp|信息(在线)"
+  "Online|信息(在线)"
+  "Onln|信息(在线)"
+  "Optimal|信息(正常)"
+  "Raw|信息(直通盘)"
+  "Ready|信息(未配置Raid)"
+  "Sntze|信息(清洁状态)"
+  "UGood|信息(未格式化待用)"
+  "Unconfigured(good)|信息(未格式化待用)"
 )
+
+# 生成状态映射数组
+PD_KEYWORDS_MAP=""
+for kw in "${PD_KEYWORDS[@]}"; do
+  PD_KEYWORDS_MAP+="${kw%%|*}|${kw##*|}\n"
+done
+unset kw
 
 # -----------------------------------------------------------------------------
 # associate_array_to_json <array_name>
@@ -84,32 +99,32 @@ readonly PD_KEYWORDS=(
 #   通过 eval 动态读取数组内容（Bash 不支持数组引用传递）。
 # -----------------------------------------------------------------------------
 associate_array_to_json() {
-    local arr_name="$1"
-    local sep=$'\x19'   # ASCII 25，Unit Separator，用作 key/value 间的分隔符
-    local out="" key val
-    local keys=()
+  local arr_name="$1"
+  local sep=$'\x19' # ASCII 25，Unit Separator，用作 key/value 间的分隔符
+  local out="" key val
+  local keys=()
 
-    # 动态获取关联数组的所有 key
+  # 动态获取关联数组的所有 key
+  set -f
+  eval "keys=(\"\${!${arr_name}[@]}\")" 2>/dev/null || keys=()
+  set +f
+
+  if ((${#keys[@]} == 0)); then
+    printf '%s\n' '{}'
+    return
+  fi
+
+  # 将所有 key-value 对拼接为 sep 分隔的字符串
+  for key in "${keys[@]}"; do
     set -f
-    eval "keys=(\"\${!${arr_name}[@]}\")" 2>/dev/null || keys=()
+    eval "val=\${${arr_name}[\"\$key\"]-}" 2>/dev/null || val=""
     set +f
+    out+="${key}${sep}${val}${sep}"
+  done
 
-    if ((${#keys[@]} == 0)); then
-        printf '%s\n' '{}'
-        return
-    fi
-
-    # 将所有 key-value 对拼接为 sep 分隔的字符串
-    for key in "${keys[@]}"; do
-        set -f
-        eval "val=\${${arr_name}[\"\$key\"]-}" 2>/dev/null || val=""
-        set +f
-        out+="${key}${sep}${val}${sep}"
-    done
-
-    # 用 jq 将 sep 分隔的扁平列表转换为 JSON 对象
-    # split 后得到 [k1, v1, k2, v2, ...]，每两个元素构成一个 {key: value} 对
-    printf '%s' "$out" | jq -R -s --arg sep "$sep" -c '
+  # 用 jq 将 sep 分隔的扁平列表转换为 JSON 对象
+  # split 后得到 [k1, v1, k2, v2, ...]，每两个元素构成一个 {key: value} 对
+  printf '%s' "$out" | jq -R -s --arg sep "$sep" -c '
         (split($sep)[:-1]) as $a |
         [range(0; ($a|length); 2) | { ($a[.]) : $a[. + 1] }] |
         add
@@ -126,13 +141,13 @@ associate_array_to_json() {
 # 输出: JSON 数组，例如 ["val1","val2","val3"]
 # -----------------------------------------------------------------------------
 array_to_json() {
-    local sep=$'\x19'   # 同 associate_array_to_json，使用 ASCII 25 作为分隔符
-    {
-        for v in "$@"; do
-            printf '%s%s' "$v" "$sep"
-        done
-    } |
-        jq -Rrcs --arg sep "$sep" '
+  local sep=$'\x19' # 同 associate_array_to_json，使用 ASCII 25 作为分隔符
+  {
+    for v in "$@"; do
+      printf '%s%s' "$v" "$sep"
+    done
+  } |
+    jq -Rrcs --arg sep "$sep" '
             (split($sep)[:-1]) as $a | $a
         '
 }

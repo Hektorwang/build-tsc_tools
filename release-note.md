@@ -1,13 +1,23 @@
 # release-note
 
+## Version=2.0.4
+
+1. fix:(tsc_iaas_info/lib/monitors/cpu.sh): 修复 bash-4.2 的 `$(())` 中不能包含注释的问题(删掉了注释)
+2. fix:(packages/install.sh): 修复 `sas3ircu` 的 raid 卡驱动安装判断错误问题
+3. fix:(packages/install.sh): 将本工具自带的二进制工具如 `jq` `sshpass` 等安装到 `/home/tsc/tsc_tools/bin/` 并在 `tsc_profile` 中优先指定本路径, 防止系统自带命令与本工具所用不同导致工作异常
+4. fix:(modules/tsc_iaas_info/lib/raid/sas3.sh): 修复当没有做 vd 时报错的问题
+5. fix:(modules/tsc_iaas_info/lib/monitors/storage.sh): 修复 `mktemp` 参数问题
+6. fix: 之前 AI 重构 tsc_iaas_info 后, 丢失了采集 mpt3sas raid 信息的功能, 补回此功能
+7. TODO: 将采集 raid 信息功能(lsi, arcconf卡)的部分都剥离到 lib/raid/, 与 lib/collectors/storage.sh 解耦
+
 ## Version=2.0.3.rc3
 
 1. fix: 修改 sshd 配置后 reload 而非 restart 服务
 
 ## Version=2.0.3.rc2
 
-1. fix: 修复当 arcconf 无法执行时强制退出导致无法安装的问题
-2. fix: 不再禁用 dbus 服务
+1. fix: 修复当 `arcconf` 无法执行时强制退出导致无法安装的问题
+2. fix: 不再禁用 `dbus` 服务
 
 ## Version=2.0.3.rc1
 
@@ -17,7 +27,7 @@
 
 ## Version=2.0.3.beta9
 
-1. chore: 将 `jq` 从源码编译版替换为官方 release 二进制版
+1. chore: 将 `jq` 从源码编译版替换为官方 release-1.8.1 二进制版
 2. fix: 修复安装 `arcconf` 时判断错误问题
 3. fix: 修复 `arcconf` 的raid卡的vd状态为 `InterimRecovery` 无法识别的问题, 将该状态识别为 `尝试临时恢复`
 4. feat(`gen_req.sh`): 生成 rag 友好的文档 `rag.md`, 同时更新所有模块的 readme.md, 删除 module.json, 并修改 tsc 遍历模块元数据的方式

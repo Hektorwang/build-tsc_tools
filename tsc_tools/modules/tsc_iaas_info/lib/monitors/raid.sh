@@ -60,7 +60,7 @@ monitor_raid_health() {
         ;;
     mpt3sas)
         # LSI SAS3 HBA，使用 sas3ircu
-        raid_check_health_sas3 "${raid_bin}"
+        raid_sas3 "${raid_bin}" runtime
         ;;
     mpt2sas)
         # LSI SAS2 HBA，使用 sas2ircu

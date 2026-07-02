@@ -54,16 +54,16 @@ monitor_cpu() {
     # 计算 1 秒内的总 jiffies 差值（所有 CPU 状态的变化量之和）
     local total_jiffies
     total_jiffies="$((
-        second_sample[0] - first_sample[0] +   # user
-        second_sample[1] - first_sample[1] +   # nice
-        second_sample[2] - first_sample[2] +   # system
-        second_sample[3] - first_sample[3] +   # idle
-        second_sample[4] - first_sample[4] +   # iowait
-        second_sample[5] - first_sample[5] +   # irq
-        second_sample[6] - first_sample[6] +   # softirq
-        second_sample[7] - first_sample[7] +   # steal
-        second_sample[8] - first_sample[8] +   # guest
-        second_sample[9] - first_sample[9]     # guest_nice
+        second_sample[0] - first_sample[0] +
+        second_sample[1] - first_sample[1] +
+        second_sample[2] - first_sample[2] +
+        second_sample[3] - first_sample[3] +
+        second_sample[4] - first_sample[4] +
+        second_sample[5] - first_sample[5] +
+        second_sample[6] - first_sample[6] +
+        second_sample[7] - first_sample[7] +
+        second_sample[8] - first_sample[8] +
+        second_sample[9] - first_sample[9]
     ))"
 
     # idle 和 iowait 的差值（用于计算使用率）

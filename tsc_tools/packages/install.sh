@@ -31,39 +31,21 @@ readonly -A SUPPORTED_BINARY_TOOLS=(
 ##################################################
 _install() {
     local tool_name failed_tools=() installed_tools=() missing_tools=()
+    mkdir -p /home/tsc/tsc_tools/bin/
     for tool_name in "${!SUPPORTED_BINARY_TOOLS[@]}"; do
-        if "${tool_name}" "${SUPPORTED_BINARY_TOOLS[${tool_name}]}" &>/dev/null; then
-            installed_tools+=("${tool_name}")
-            continue
-        fi
-        if [[ ! -d "${BINARY_TOOLS_DIR}"/"${tool_name}" ]]; then
-            missing_tools+=("${tool_name}")
-            continue
-        fi
         if [[ -f "${BINARY_TOOLS_DIR}"/"${tool_name}"/"${tool_name}-noarch" ]]; then
-            if \cp "${BINARY_TOOLS_DIR}/${tool_name}/${tool_name}-noarch" /bin/"${tool_name}"; then
-                chmod a+x /bin/"${tool_name}"
-                installed_tools+=("${tool_name}")
-            else
-                failed_tools+=("${tool_name}")
-            fi
-        elif [[ -f "${BINARY_TOOLS_DIR}"/"${tool_name}"/"${tool_name}-$(arch)" ]]; then
-
-            if \cp "${BINARY_TOOLS_DIR}"/"${tool_name}"/"${tool_name}-$(arch)" /bin/"${tool_name}"; then
-                chmod a+x /bin/"${tool_name}"
-                installed_tools+=("${tool_name}")
-            else
-                failed_tools+=("${tool_name}")
-            fi
+            \cp "${BINARY_TOOLS_DIR}/${tool_name}/${tool_name}-noarch" /home/tsc/tsc_tools/bin/"${tool_name}"
+            chmod a+x /home/tsc/tsc_tools/bin/"${tool_name}"
+        fi
+        if [[ -f "${BINARY_TOOLS_DIR}"/"${tool_name}"/"${tool_name}-$(arch)" ]]; then
+            \cp "${BINARY_TOOLS_DIR}/${tool_name}/${tool_name}-$(arch)" /home/tsc/tsc_tools/bin/"${tool_name}"
+            chmod a+x /home/tsc/tsc_tools/bin/"${tool_name}"
+        fi
+        if ! "${tool_name}" "${SUPPORTED_BINARY_TOOLS[${tool_name}]}" &>/dev/null; then
+            \cp /home/tsc/tsc_tools/bin/"${tool_name}" /bin/"${tool_name}"
+            installed_tools+=("${tool_name}")
         fi
     done
-
-    if [[ ${#failed_tools[@]} -gt 0 ]]; then
-        LOGWARNING "Failed to install: ${failed_tools[*]}"
-    fi
-    if [[ ${#missing_tools[@]} -gt 0 ]]; then
-        LOGWARNING "Missing install source file: ${missing_tools[*]}"
-    fi
     if [[ ${#installed_tools[@]} -gt 0 ]]; then
         LOGSUCCESS "Installed tools: ${installed_tools[*]}"
     fi
@@ -77,11 +59,8 @@ _install_raid_cli() {
         return 0
     fi
     local is_sas3ircu
-    is_sas3ircu="$(
-        "${BINARY_TOOLS_DIR}/sas3ircu/sas3ircu-$(arch)" list &>/dev/null ||
-            echo 0
-    )"
-    if [[ "${is_sas3ircu:-0}" -ne 0 ]]; then
+    is_sas3ircu="$("${BINARY_TOOLS_DIR}/sas3ircu/sas3ircu-$(arch)" list &>/dev/null)"
+    if [[ "${is_sas3ircu:-1}" -ne 0 ]]; then
         \cp "${BINARY_TOOLS_DIR}/sas3ircu/sas3ircu-$(arch)" /bin/sas3ircu
         chmod +x /bin/sas3ircu
         LOGSUCCESS "Installed /bin/sas3ircu"
@@ -98,10 +77,8 @@ _install_raid_cli() {
         LOGSUCCESS "Installed /bin/storcli64 /bin/storcli"
     fi
     local arcconf_output
-    set +e
     arcconf_output=$("${BINARY_TOOLS_DIR}/arcconf/arcconf-$(arch)" GETCONFIG 1 PD 2>&1)
     exit_code=$?
-    set -e
     if [[ ${exit_code} -eq 0 ]] && ! echo "${arcconf_output}" | grep -q "Controllers found: 0"; then
         \cp "${BINARY_TOOLS_DIR}/arcconf/arcconf-$(arch)" /bin/arcconf
         chmod +x /bin/arcconf
@@ -112,5 +89,6 @@ _install_raid_cli() {
 source "${BINARY_TOOLS_DIR}/../func"
 
 machine_type="${1:-vm}"
-_install
-_install_raid_cli "${machine_type}"
+_install &&
+  _install_raid_cli "${machine_type}" &&
+  LOGSUCCESS "Installed tsc_tools binary files"
