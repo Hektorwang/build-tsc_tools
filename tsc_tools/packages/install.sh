@@ -19,6 +19,7 @@ readonly -A SUPPORTED_BINARY_TOOLS=(
     ["qrencode"]="-V"
     ["sshpass"]="-V"
     ["stress-ng"]="-V"
+    ["yq_go"]="-V"
 )
 
 ##################################################

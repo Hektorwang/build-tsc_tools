@@ -1,5 +1,13 @@
 # release-note
 
+## Version=2.1.0
+
+1. feat(yq_go): 增加 `yq_go`<https://github.com/mikefarah/yq> 工具, 以提供解析`YAML`, `JSON`, `INI` `XML` 和 `TOML` 的能力
+
+## Version=2.0.5
+
+1. fix(tsc_tools/modules/tsc_iaas_info/lib/alert.sh): 修复了读取数据中 storage 存储层级问题
+
 ## Version=2.0.4
 
 1. fix:(tsc_iaas_info/lib/monitors/cpu.sh): 修复 bash-4.2 的 `$(())` 中不能包含注释的问题(删掉了注释)
@@ -7,7 +15,7 @@
 3. fix:(packages/install.sh): 将本工具自带的二进制工具如 `jq` `sshpass` 等安装到 `/home/tsc/tsc_tools/bin/` 并在 `tsc_profile` 中优先指定本路径, 防止系统自带命令与本工具所用不同导致工作异常
 4. fix:(modules/tsc_iaas_info/lib/raid/sas3.sh): 修复当没有做 vd 时报错的问题
 5. fix:(modules/tsc_iaas_info/lib/monitors/storage.sh): 修复 `mktemp` 参数问题
-6. fix: 之前 AI 重构 tsc_iaas_info 后, 丢失了采集 raid 信息的功能, 补回此功能
+6. fix: 之前 AI 重构 tsc_iaas_info 后, 丢失了采集 mpt3sas raid 信息的功能, 补回此功能
 7. TODO: 将采集 raid 信息功能(lsi, arcconf卡)的部分都剥离到 lib/raid/, 与 lib/collectors/storage.sh 解耦
 
 ## Version=2.0.3.rc3

@@ -1,5 +1,9 @@
 # release-note
 
+## Version=2.1.0
+
+1. feat(yq_go): 增加 `yq_go`<https://github.com/mikefarah/yq> 工具, 以提供解析`YAML`, `JSON`, `INI` `XML` 和 `TOML` 的能力
+
 ## Version=2.0.5
 
 1. fix(tsc_tools/modules/tsc_iaas_info/lib/alert.sh): 修复了读取数据中 storage 存储层级问题
