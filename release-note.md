@@ -1,5 +1,9 @@
 # release-note
 
+## Version=2.1.1
+
+1. 回滚 `2.0.5` 的错误修改
+
 ## Version=2.1.0
 
 1. feat(yq_go): 增加 `yq_go`<https://github.com/mikefarah/yq> 工具, 以提供解析`YAML`, `JSON`, `INI` `XML` 和 `TOML` 的能力

@@ -35,26 +35,26 @@
 #   更新后的 warnings JSON 对象字符串
 # -----------------------------------------------------------------------------
 _add_mountpoint_warning() {
-    local warnings="$1"
-    local warn_key="$2"
-    local jq_filter="$3"
-    local threshold="$4"
-    local mountpoint_json="$5"
-    local msg_prefix="$6"
+  local warnings="$1"
+  local warn_key="$2"
+  local jq_filter="$3"
+  local threshold="$4"
+  local mountpoint_json="$5"
+  local msg_prefix="$6"
 
-    local list pts
-    # 用 jq_filter 筛选超阈值的挂载点，得到目标路径列表
-    list="$(echo "${mountpoint_json}" | jq --argjson threshold "${threshold}" "${jq_filter}")"
-    if [[ "${list}" != "[]" ]]; then
-        # 将路径列表转为逗号分隔字符串
-        pts="$(echo "${list}" | jq -r 'join(", ")')"
-        # 追加告警到 warnings 对象
-        warnings="$(echo "${warnings}" | jq \
-            --arg k "${warn_key}" \
-            --arg v "${msg_prefix}${pts} is above threshold: ${threshold}%." \
-            '.[$k] = $v')"
-    fi
-    echo "${warnings}"
+  local list pts
+  # 用 jq_filter 筛选超阈值的挂载点，得到目标路径列表
+  list="$(echo "${mountpoint_json}" | jq --argjson threshold "${threshold}" "${jq_filter}")"
+  if [[ "${list}" != "[]" ]]; then
+    # 将路径列表转为逗号分隔字符串
+    pts="$(echo "${list}" | jq -r 'join(", ")')"
+    # 追加告警到 warnings 对象
+    warnings="$(echo "${warnings}" | jq \
+      --arg k "${warn_key}" \
+      --arg v "${msg_prefix}${pts} is above threshold: ${threshold}%." \
+      '.[$k] = $v')"
+  fi
+  echo "${warnings}"
 }
 
 # -----------------------------------------------------------------------------
@@ -80,64 +80,64 @@ _add_mountpoint_warning() {
 #   storage_unwritable — 触发条件: 任意挂载点 writable == false
 # -----------------------------------------------------------------------------
 generate_threshold_alerts() {
-    local cpu_json="$1"
-    local memory_json="$2"
-    local mountpoint_json="$3"
-    local cpu_threshold="$4"
-    local memory_threshold="$5"
-    local storage_threshold="$6"
+  local cpu_json="$1"
+  local memory_json="$2"
+  local mountpoint_json="$3"
+  local cpu_threshold="$4"
+  local memory_threshold="$5"
+  local storage_threshold="$6"
 
-    local warnings='{}'
-    local cpu_used_percent memory_used_percent
+  local warnings='{}'
+  local cpu_used_percent memory_used_percent
 
-    cpu_used_percent="$(echo "${cpu_json}" | jq -r '.used_percent')"
-    memory_used_percent="$(echo "${memory_json}" | jq -r '.ram.used_percent')"
+  cpu_used_percent="$(echo "${cpu_json}" | jq -r '.used_percent')"
+  memory_used_percent="$(echo "${memory_json}" | jq -r '.ram.used_percent')"
 
-    # 告警 key: cpu_usage — 触发条件: CPU used_percent > cpu_threshold（使用率超过阈值百分比）
-    # awk 用于浮点数比较（bash 不支持浮点比较）
-    if awk -v t="${cpu_threshold}" "BEGIN {exit !(${cpu_used_percent} > t)}"; then
-        warnings="$(echo "${warnings}" | jq \
-            --arg threshold "${cpu_threshold}" \
-            '."cpu_usage" = "CPU usage is above threshold: \($threshold)%."')"
-    fi
+  # 告警 key: cpu_usage — 触发条件: CPU used_percent > cpu_threshold（使用率超过阈值百分比）
+  # awk 用于浮点数比较（bash 不支持浮点比较）
+  if awk -v t="${cpu_threshold}" "BEGIN {exit !(${cpu_used_percent} > t)}"; then
+    warnings="$(echo "${warnings}" | jq \
+      --arg threshold "${cpu_threshold}" \
+      '."cpu_usage" = "CPU usage is above threshold: \($threshold)%."')"
+  fi
 
-    # 告警 key: memory_usage — 触发条件: 内存 ram.used_percent > memory_threshold（内存使用率超过阈值百分比）
-    if awk -v t="${memory_threshold}" "BEGIN {exit !(${memory_used_percent} > t)}"; then
-        warnings="$(echo "${warnings}" | jq \
-            --arg threshold "${memory_threshold}" \
-            '."memory_usage" = "Memory usage is above threshold: \($threshold)%."')"
-    fi
+  # 告警 key: memory_usage — 触发条件: 内存 ram.used_percent > memory_threshold（内存使用率超过阈值百分比）
+  if awk -v t="${memory_threshold}" "BEGIN {exit !(${memory_used_percent} > t)}"; then
+    warnings="$(echo "${warnings}" | jq \
+      --arg threshold "${memory_threshold}" \
+      '."memory_usage" = "Memory usage is above threshold: \($threshold)%."')"
+  fi
 
-    # 告警 key: storage_usage — 触发条件: 任意挂载点 size.used_percent > storage_threshold（存储容量使用率超过阈值百分比）
-    warnings="$(_add_mountpoint_warning \
-        "${warnings}" \
-        "storage_usage" \
-        '[.[] | select(.size.used_percent > $threshold) | .target]' \
-        "${storage_threshold}" \
-        "${mountpoint_json}" \
-        "Storage size usage for ")"
+  # 告警 key: storage_usage — 触发条件: 任意挂载点 size.used_percent > storage_threshold（存储容量使用率超过阈值百分比）
+  warnings="$(_add_mountpoint_warning \
+    "${warnings}" \
+    "storage_usage" \
+    '[.[] | select(.size.used_percent > $threshold) | .target]' \
+    "${storage_threshold}" \
+    "${mountpoint_json}" \
+    "Storage size usage for ")"
 
-    # 告警 key: inode_usage — 触发条件: 任意挂载点 inodes.used_percent > storage_threshold（inode 使用率超过阈值百分比，与 storage_threshold 共用同一阈值）
-    warnings="$(_add_mountpoint_warning \
-        "${warnings}" \
-        "inode_usage" \
-        '[.[] | select(.inodes.used_percent > $threshold) | .target]' \
-        "${storage_threshold}" \
-        "${mountpoint_json}" \
-        "Inode usage for ")"
+  # 告警 key: inode_usage — 触发条件: 任意挂载点 inodes.used_percent > storage_threshold（inode 使用率超过阈值百分比，与 storage_threshold 共用同一阈值）
+  warnings="$(_add_mountpoint_warning \
+    "${warnings}" \
+    "inode_usage" \
+    '[.[] | select(.inodes.used_percent > $threshold) | .target]' \
+    "${storage_threshold}" \
+    "${mountpoint_json}" \
+    "Inode usage for ")"
 
-    # 告警 key: storage_unwritable — 触发条件: 任意挂载点 writable == false（挂载点不可写）
-    local storage_unwritable_list
-    storage_unwritable_list="$(echo "${mountpoint_json}" | jq '[.[] | select(.writable == false) | .target]')"
-    if [[ "${storage_unwritable_list}" != "[]" ]]; then
-        local unwritable_mount_points
-        unwritable_mount_points="$(echo "${storage_unwritable_list}" | jq -r 'join(", ")')"
-        warnings="$(echo "${warnings}" | jq \
-            --arg unwritable_mount_points "${unwritable_mount_points}" \
-            '."storage_unwritable" = "The following mount points are not writable: \($unwritable_mount_points)."')"
-    fi
+  # 告警 key: storage_unwritable — 触发条件: 任意挂载点 writable == false（挂载点不可写）
+  local storage_unwritable_list
+  storage_unwritable_list="$(echo "${mountpoint_json}" | jq '[.[] | select(.writable == false) | .target]')"
+  if [[ "${storage_unwritable_list}" != "[]" ]]; then
+    local unwritable_mount_points
+    unwritable_mount_points="$(echo "${storage_unwritable_list}" | jq -r 'join(", ")')"
+    warnings="$(echo "${warnings}" | jq \
+      --arg unwritable_mount_points "${unwritable_mount_points}" \
+      '."storage_unwritable" = "The following mount points are not writable: \($unwritable_mount_points)."')"
+  fi
 
-    echo "${warnings}"
+  echo "${warnings}"
 }
 
 # -----------------------------------------------------------------------------
@@ -161,82 +161,84 @@ generate_threshold_alerts() {
 #   memory_total_changed     — 触发条件: 内存总容量与历史不一致
 # -----------------------------------------------------------------------------
 generate_hardware_change_alerts() {
-    local current_json="$1"
-    local logfile="$2"
-    local warnings='{}'
+  local current_json="$1"
+  local logfile="$2"
+  local warnings='{}'
 
-    # 历史文件不存在则无法对比，直接返回空告警（首次运行时正常）
-    [[ ! -f "${logfile}" ]] && echo "${warnings}" && return 0
-
-    # --- 磁盘数量对比 ---
-    # 使用 jq 直接计数（比原来的 awk 解析 JSON 更健壮，不依赖格式化输出）
-
-    # 告警 key: pd_cnt_diffrent — 触发条件: 当前 RAID 盘数量（type=="raid"）与历史日志不一致
-    local pd_cnt ori_pd_cnt
-    pd_cnt="$(echo "${current_json}" | jq '[.storage[][]? | select(.type=="raid")] | length')"
-    ori_pd_cnt="$(jq '[.storage[][]? | select(.type=="raid")] | length' "${logfile}")"
-    if [[ "${pd_cnt}" != "${ori_pd_cnt}" ]]; then
-        warnings="$(echo "${warnings}" | jq \
-            --arg cur "${pd_cnt}" --arg ori "${ori_pd_cnt}" \
-            '."pd_cnt_diffrent" = "raid disk count changed from \($ori) to \($cur)."')"
-    fi
-
-    # 告警 key: direct_disk_cnt_diffrent — 触发条件: 当前直通盘数量（type=="direct"）与历史日志不一致
-    local direct_disk_cnt ori_direct_disk_cnt
-    direct_disk_cnt="$(echo "${current_json}" | jq '[.storage[][]? | select(.type=="direct")] | length')"
-    ori_direct_disk_cnt="$(jq '[.storage[][]? | select(.type=="direct")] | length' "${logfile}")"
-    if [[ "${direct_disk_cnt}" != "${ori_direct_disk_cnt}" ]]; then
-        warnings="$(echo "${warnings}" | jq \
-            --arg cur "${direct_disk_cnt}" --arg ori "${ori_direct_disk_cnt}" \
-            '."direct_disk_cnt_diffrent" = "direct disk count changed from \($ori) to \($cur)."')"
-    fi
-
-    # --- CPU 对比 ---
-
-    # 告警 key: cpu_model_changed — 触发条件: cpu.cpu_model 字段与历史日志不一致（历史值非空时才对比，避免首次运行误报）
-    local cpu_model ori_cpu_model
-    cpu_model="$(echo "${current_json}" | jq -r '.cpu.cpu_model // ""')"
-    ori_cpu_model="$(jq -r '.cpu.cpu_model // ""' "${logfile}")"
-    if [[ -n "${ori_cpu_model}" && "${cpu_model}" != "${ori_cpu_model}" ]]; then
-        warnings="$(echo "${warnings}" | jq \
-            --arg cur "${cpu_model}" --arg ori "${ori_cpu_model}" \
-            '."cpu_model_changed" = "CPU model changed from \u0027\($ori)\u0027 to \u0027\($cur)\u0027."')"
-    fi
-
-    # 告警 key: cpu_cnt_changed — 触发条件: cpu.cpu_cnt 字段（CPU 插槽数量）与历史日志不一致（历史值非空时才对比）
-    local cpu_cnt ori_cpu_cnt
-    cpu_cnt="$(echo "${current_json}" | jq -r '.cpu.cpu_cnt // ""')"
-    ori_cpu_cnt="$(jq -r '.cpu.cpu_cnt // ""' "${logfile}")"
-    if [[ -n "${ori_cpu_cnt}" && "${cpu_cnt}" != "${ori_cpu_cnt}" ]]; then
-        warnings="$(echo "${warnings}" | jq \
-            --arg cur "${cpu_cnt}" --arg ori "${ori_cpu_cnt}" \
-            '."cpu_cnt_changed" = "CPU socket count changed from \($ori) to \($cur)."')"
-    fi
-
-    # --- 内存对比 ---
-
-    # 告警 key: memory_slot_cnt_changed — 触发条件: memory 数组长度（内存插槽数量）与历史日志不一致
-    local mem_slot_cnt ori_mem_slot_cnt
-    mem_slot_cnt="$(echo "${current_json}" | jq '[.memory[]?] | length')"
-    ori_mem_slot_cnt="$(jq '[.memory[]?] | length' "${logfile}")"
-    if [[ "${mem_slot_cnt}" != "${ori_mem_slot_cnt}" ]]; then
-        warnings="$(echo "${warnings}" | jq \
-            --arg cur "${mem_slot_cnt}" --arg ori "${ori_mem_slot_cnt}" \
-            '."memory_slot_cnt_changed" = "Memory slot count changed from \($ori) to \($cur)."')"
-    fi
-
-    # 告警 key: memory_total_changed — 触发条件: memory 各插槽 size 之和（内存总容量，保留两位小数）与历史日志不一致
-    # 对 memory 数组所有 size 求和，保留两位小数（round/100 实现四舍五入）
-    local mem_total ori_mem_total
-    mem_total="$(echo "${current_json}" | jq '[.memory[]?.size // 0] | add // 0 | . * 100 | round / 100')"
-    ori_mem_total="$(jq '[.memory[]?.size // 0] | add // 0 | . * 100 | round / 100' "${logfile}")"
-    if [[ "${mem_total}" != "${ori_mem_total}" ]]; then
-        warnings="$(echo "${warnings}" | jq \
-            --arg cur "${mem_total}" --arg ori "${ori_mem_total}" \
-            '."memory_total_changed" = "Memory total capacity changed from \($ori)G to \($cur)G."')"
-    fi
-
+  # 历史文件不存在则无法对比，直接返回空告警（首次运行时正常）
+  if [[ ! -s "${logfile}" ]]; then
     echo "${warnings}"
+    return 0
+  fi
+
+  # --- 磁盘数量对比 ---
+  # 使用 jq 直接计数（比原来的 awk 解析 JSON 更健壮，不依赖格式化输出）
+
+  # 告警 key: pd_cnt_diffrent — 触发条件: 当前 RAID 盘数量（type=="raid"）与历史日志不一致
+  local pd_cnt ori_pd_cnt
+  pd_cnt="$(echo "${current_json}" | jq '[.storage[]? | select(.type=="raid")] | length')"
+  ori_pd_cnt="$(jq '[.storage[]? | select(.type=="raid")] | length' "${logfile}")"
+  if [[ "${pd_cnt}" != "${ori_pd_cnt}" ]]; then
+    warnings="$(echo "${warnings}" | jq \
+      --arg cur "${pd_cnt}" --arg ori "${ori_pd_cnt}" \
+      '."pd_cnt_diffrent" = "raid disk count changed from \($ori) to \($cur)."')"
+  fi
+
+  # 告警 key: direct_disk_cnt_diffrent — 触发条件: 当前直通盘数量（type=="direct"）与历史日志不一致
+  local direct_disk_cnt ori_direct_disk_cnt
+  direct_disk_cnt="$(echo "${current_json}" | jq '[.storage[]? | select(.type=="direct")] | length')"
+  ori_direct_disk_cnt="$(jq '[.storage[]? | select(.type=="direct")] | length' "${logfile}")"
+  if [[ "${direct_disk_cnt}" != "${ori_direct_disk_cnt}" ]]; then
+    warnings="$(echo "${warnings}" | jq \
+      --arg cur "${direct_disk_cnt}" --arg ori "${ori_direct_disk_cnt}" \
+      '."direct_disk_cnt_diffrent" = "direct disk count changed from \($ori) to \($cur)."')"
+  fi
+  # --- CPU 对比 ---
+
+  # 告警 key: cpu_model_changed — 触发条件: cpu.cpu_model 字段与历史日志不一致（历史值非空时才对比，避免首次运行误报）
+  local cpu_model ori_cpu_model
+  cpu_model="$(echo "${current_json}" | jq -r '.cpu.cpu_model // ""')"
+  ori_cpu_model="$(jq -r '.cpu.cpu_model // ""' "${logfile}")"
+  if [[ -n "${ori_cpu_model}" && "${cpu_model}" != "${ori_cpu_model}" ]]; then
+    warnings="$(echo "${warnings}" | jq \
+      --arg cur "${cpu_model}" --arg ori "${ori_cpu_model}" \
+      '."cpu_model_changed" = "CPU model changed from \u0027\($ori)\u0027 to \u0027\($cur)\u0027."')"
+  fi
+
+  # 告警 key: cpu_cnt_changed — 触发条件: cpu.cpu_cnt 字段（CPU 插槽数量）与历史日志不一致（历史值非空时才对比）
+  local cpu_cnt ori_cpu_cnt
+  cpu_cnt="$(echo "${current_json}" | jq -r '.cpu.cpu_cnt // ""')"
+  ori_cpu_cnt="$(jq -r '.cpu.cpu_cnt // ""' "${logfile}")"
+  if [[ -n "${ori_cpu_cnt}" && "${cpu_cnt}" != "${ori_cpu_cnt}" ]]; then
+    warnings="$(echo "${warnings}" | jq \
+      --arg cur "${cpu_cnt}" --arg ori "${ori_cpu_cnt}" \
+      '."cpu_cnt_changed" = "CPU socket count changed from \($ori) to \($cur)."')"
+  fi
+
+  # --- 内存对比 ---
+
+  # 告警 key: memory_slot_cnt_changed — 触发条件: memory 数组长度（内存插槽数量）与历史日志不一致
+  local mem_slot_cnt ori_mem_slot_cnt
+  mem_slot_cnt="$(echo "${current_json}" | jq '[.memory[]?] | length')"
+  ori_mem_slot_cnt="$(jq '[.memory[]?] | length' "${logfile}")"
+  if [[ "${mem_slot_cnt}" != "${ori_mem_slot_cnt}" ]]; then
+    warnings="$(echo "${warnings}" | jq \
+      --arg cur "${mem_slot_cnt}" --arg ori "${ori_mem_slot_cnt}" \
+      '."memory_slot_cnt_changed" = "Memory slot count changed from \($ori) to \($cur)."')"
+  fi
+
+  # 告警 key: memory_total_changed — 触发条件: memory 各插槽 size 之和（内存总容量，保留两位小数）与历史日志不一致
+  # 对 memory 数组所有 size 求和，保留两位小数（round/100 实现四舍五入）
+  local mem_total ori_mem_total
+  mem_total="$(echo "${current_json}" | jq '[.memory[]?.size // 0] | add // 0 | . * 100 | round / 100')"
+  ori_mem_total="$(jq '[.memory[]?.size // 0] | add // 0 | . * 100 | round / 100' "${logfile}")"
+  if [[ "${mem_total}" != "${ori_mem_total}" ]]; then
+    warnings="$(echo "${warnings}" | jq \
+      --arg cur "${mem_total}" --arg ori "${ori_mem_total}" \
+      '."memory_total_changed" = "Memory total capacity changed from \($ori)G to \($cur)G."')"
+  fi
+
+  echo "${warnings}"
 }
 
 # -----------------------------------------------------------------------------
@@ -257,12 +259,12 @@ generate_hardware_change_alerts() {
 #   中文状态以"告警"或"严重"开头 → 异常，加入告警列表
 # -----------------------------------------------------------------------------
 generate_raid_alerts() {
-    local raid_status_json="$1"
+  local raid_status_json="$1"
 
-    # 筛选条件: VD 或 PD 的中文状态不含"信息"字样
-    # index("信息") == null 表示字符串中不包含"信息"子串
-    echo "${raid_status_json}" |
-        jq '[ .[] | select (
+  # 筛选条件: VD 或 PD 的中文状态不含"信息"字样
+  # index("信息") == null 表示字符串中不包含"信息"子串
+  echo "${raid_status_json}" |
+    jq '[ .[] | select (
             ( has("虚拟磁盘中文状态") and (.["虚拟磁盘中文状态"]|index("信息")) == null ) or
             ( has("物理磁盘中文状态") and (.["物理磁盘中文状态"]|index("信息")) == null )
         ) ]'
