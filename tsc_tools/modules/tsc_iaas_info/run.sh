@@ -29,7 +29,12 @@ shopt -s nullglob # glob 无匹配时返回空字符串而非原始模式
 WORK_DIR="$(dirname "$(readlink -f "$0")")" && cd "${WORK_DIR}" || exit 99
 
 # 加载 tsc 公共函数库（提供 detect_system_info 等函数）
-# TSC_FUNC 为 true 时表示已由外部加载，跳过重复 source
+# TSC_FUNC 为 true 时表示已由外部加载，跳过重复 source。
+# 设计约束: 本模块 stdout 为纯 JSON(供 zabbix 等读取), 本模块及 lib/ 内
+# 禁止调用 LOG* 等人类可读输出污染 stdout。
+# 守卫所依赖的 func 函数(detect_system_info/array_to_json/
+# associate_array_to_json, 后两者由 lib/common.sh 提供同名实现)均可正常
+# 获得; 若新增未导出的 func 函数调用, 须先在 func 中 export -f。
 if ! "${TSC_FUNC:-false}"; then
     source "${WORK_DIR}/../../func"
 fi

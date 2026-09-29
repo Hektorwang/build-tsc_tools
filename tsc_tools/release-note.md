@@ -1,5 +1,27 @@
 # release-note
 
+## Version=2.1.2
+
+1. refactor: 移除 fping 相关内容（tsc_fping 模块、二进制及安装清单条目）
+2. fix(func): 重写 `str_strip`: 修复 sed 不支持 `\u` 转义导致误剥首尾 `u`/`3`/`0` 字符的问题; 改为优先使用 perl 以覆盖全部 Unicode 空白字符, 无 perl 时自动退化为新增的纯 bash 实现 `str_strip_alternative`(不依赖 locale, 覆盖 NBSP(U+00A0) 与全角空格(U+3000))
+3. fix(tsc_sysinit): `install_fhmv` 增加找不到 rpm 的前置校验与同版本跳过, 保持卸旧装新方式(该包 %post 会 `chattr +i` 且 %postun 无升级守卫, 不适用 `rpm -Uvh`); `--all` 模式纳入 `install_fhmv`, 并支持 `--no-` 在 `--all` 下按功能排除
+4. fix(build): build.sh 打包前检查 dos2unix 是否可用, 缺失时明确报错退出
+5. fix(tsc_netspeed): 修复无参数时 `IFNAME="$1"` 在 nounset 下报 unbound variable 的问题, 现可正常进入 usage 帮助; 接口不存在时前置校验并列出可用接口(原先进循环后才失败且报错双份); 8 段重复的统计读取收拢为 `read_stat`(网卡中途消失的保护不变)
+6. fix(tsc_sysinit): 日志变量修正为 `log_file` 并更正文件名拼写 `tsc_sysinit.log`; 原变量名 `logfile` 与 func `__log` 读取的 `log_file` 不匹配, 日志从未写入文件
+7. fix(tsc_drop_cache): 删除复制的 `__log/LOG*`, 改为 source 公共 `func`(与其他模块一致); 去除重复的 `script_name` 定义与多余的 `SETCOLOR_*` 导出; `set -o posix` 修正为 `set +o posix`; 不设 `TSC_FUNC` 守卫(经 tsc 分发器调用时子进程仅继承被 `export -f` 的函数, `__log` 不在其中, 跳过 source 会在首次打日志时报 `__log: command not found`)
+8. docs(tsc_iaas_info): 在 run.sh 与 lib/common.sh 注明设计约束——本模块 stdout 为纯 JSON(供 zabbix 等读取), 本模块及 lib/ 禁止调用 `LOG*` 污染输出; 模块实际使用的 func 函数均已可正常获得, `TSC_FUNC` 守卫维持现状
+9. TODO(tsc): 分发器多模块调用时参数错位(按原始参数下标切分剔除模块名后的数组, 后位模块的位置参数会串入前位模块、末位模块参数丢失); `tsc --help`/`-h`/`help` 均报错退出(README 文档了 `--help`), 132 行的 help 分支为死代码; 模块执行顺序依赖关联数组遍历, 无顺序保证
+10. fix(func): `_conv2sec` 补充从 `BASH_REMATCH[3]` 提取时间单位, 修复 `1m`/`1h`/`1d` 均按秒处理的问题; 单位转小写改用 `${var,,}` 去掉一次 fork; 经 `tmout 1m sleep 2` 回归验证(修复前约 1 秒即被超时杀死)
+11. TODO(tsc_iaas_info): sas3 collect 输出 pretty JSON(缺 `jq -c`)导致静态 storage 结构错误, mpt3sas 机器从第二次运行起 `--runtime` 必崩(alert.sh 对嵌套数组 jq 报错); storcli 控制器号解析抓到 `====` 分隔行; sas2/sas3 VD 卷号与状态解析错误, 每轮产生假 RAID 告警; sas3 多控制器仅保留最后一个; mpt2sas 有监控无采集分支; lsblk SIZE 非 T/G 单位时 storage 采集整体失败; `--*_threshold` 未做数字校验
+12. fix(packages/install.sh): 重写 `_install_raid_cli` 探测逻辑——sas3ircu 原先在命令替换内 `&>/dev/null` 把输出与退出码一并丢弃, 探测恒真退化为一律安装, 改为真实读取退出码并仅在检测到 SAS3 控制器时安装; 检测到 SAS3 卡后跳过 storcli(storcli 对 SAS3 IR 卡的状态读取不准), 仅在无 SAS3 卡且存在 MegaRAID 控制器时安装; storcli/捆绑二进制无法运行时由静默跳过改为 LOGWARNING 告警; 安装动作改为 `&&` 链并在 cp 失败时 LOGERROR, 消除安装失败仍报 Installed 的假成功
+13. fix(tsc_monitor_run_stat): PNAME 模式不再先 `head -n1` 截断, 按pattern匹配的全部 PID 过滤自身进程链后再判断个数, 修复"多匹配要求重设 pattern"分支不可达的问题(原先可能静默监控到错误进程); `pgrep -f` 会把命令行含 pattern 的自身进程链(tsc 分发器/脚本)与脚本派生的瞬时 fork 一并匹配进来, 按祖先链与 cmdline 含 `$0` 过滤排除; 被监控进程消失时给出明确报错并以 rc=1 退出(原先 errexit 静默死亡, 或报错信息被命令替换捕获吞掉); PID 模式增加数字前置校验
+14. fix(tsc_collectSar): compare.sh 错误分支补 `exit 1`(原先实际返回 0, 调用方无法感知失败); 日期参数增加 YYYYMMDD 格式与有效性校验; 探测本机网口由 `ifconfig` 改为优先 `ip`(无 `ip` 时回退); 全量变量加引号; sar 取列逻辑保持原语义不变(列位与目标机 sysstat 版本相关, 在新版 sysstat 下取值列位偏移为已知限制, 已在脚本头注释说明)
+15. TODO(tsc_iaas_info): 补 `tests/test_raid_health.sh` 用例(fixtures 已备好, 该区恰是缺陷密集区); usage 补充 `--sn`; awk hash 遍历顺序不固定可能破坏 MD5 去重; `findmnt` 对含空格挂载点转义导致静默跳过; 采集失败时遗留空的带时间戳文件
+
+## Version=2.1.1
+
+1. 回滚 `2.0.5` 的错误修改
+
 ## Version=2.1.0
 
 1. feat(yq_go): 增加 `yq_go`<https://github.com/mikefarah/yq> 工具, 以提供解析`YAML`, `JSON`, `INI` `XML` 和 `TOML` 的能力

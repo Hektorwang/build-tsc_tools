@@ -8,6 +8,12 @@ shopt -s nullglob
 
 PROJECT_DIR="$(dirname "$(readlink -f "$0")")" && cd "${PROJECT_DIR}" || exit 99
 
+# 打包依赖检查
+if ! command -v dos2unix &>/dev/null; then
+    echo "ERROR: dos2unix command not found, please install dos2unix first." >&2
+    exit 1
+fi
+
 # 定义版本和日期变量
 version="$(awk -F '=' '/Version=/{print $2;exit}' <"${PROJECT_DIR}"/release-note.md)"
 createdate="$(date "+%Y%m%d")"

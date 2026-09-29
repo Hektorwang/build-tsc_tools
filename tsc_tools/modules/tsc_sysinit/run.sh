@@ -186,7 +186,7 @@ shopt -s dotglob
 
 WORK_DIR="$(dirname "$(readlink -f "$0")")"
 source "${WORK_DIR}"/../../func
-logfile=/var/log/tsc/tsc_sysinti.log
+log_file=/var/log/tsc/tsc_sysinit.log
 
 mkdir -p /var/log/tsc/
 
@@ -718,17 +718,45 @@ config_rc_local() {
 
 install_fhmv() {
     LOGINFO "${FUNCNAME[0]}"
-    rpm -q fh-data-recovery &>/dev/null && rpm -e fh-data-recovery
-    rpm -ivh "$(
-        find "${WORK_DIR}"/../ -type f -name "fh-data-recovery*.rpm" |
-            sort -V | tail -n1
-    )"
+    local rpm_file installed_ver packaged_ver
+    rpm_file="$(find "${WORK_DIR}"/../ -type f -name "fh-data-recovery*.rpm" |
+        sort -V | tail -n1)"
+    if [[ -z "${rpm_file}" ]]; then
+        LOGERROR "${FUNCNAME[0]}: fh-data-recovery rpm not found."
+        return 1
+    fi
+    installed_ver="$(rpm -q --qf '%{VERSION}-%{RELEASE}' fh-data-recovery 2>/dev/null || true)"
+    packaged_ver="$(rpm -qp --qf '%{VERSION}-%{RELEASE}' "${rpm_file}" 2>/dev/null || true)"
+    if [[ -z "${installed_ver}" || "${installed_ver}" != "${packaged_ver}" ]]; then
+        # 不能用 rpm -Uvh: 本包 %post 会 chattr +i(含 rpm 自有文件, 事务替换会失败),
+        # 且 %postun 无 $1 升级守卫, 升级时会把新装文件搬走. 故卸旧再装新,
+        # 依赖其 preun/postun 清理 +i 并还原原生 rm.
+        if rpm -q fh-data-recovery &>/dev/null; then
+            rpm -e fh-data-recovery
+        fi
+        rpm -ivh "${rpm_file}"
+    else
+        LOGINFO "${FUNCNAME[0]}: fh-data-recovery-${installed_ver} already installed, skip."
+    fi
     if rm -v &>/dev/null; then
         LOGSUCCESS "${FUNCNAME[0]}"
     else
         LOGERROR "${FUNCNAME[0]}"
         return 1
     fi
+}
+
+# --all 模式的排除机制: argbash 布尔只有 on/off, 无法区分 "默认 off" 与 "--no- 显式排除",
+# 故扫描原始参数记录显式 --no-<功能名>, 由 all_mode 判断该功能在 --all 下是否执行
+declare -A explicit_no=()
+for _tsc_arg in "$@"; do
+    [[ "${_tsc_arg}" == --no-* ]] && explicit_no["${_tsc_arg#--no-}"]=1
+done
+unset _tsc_arg
+
+# 用法: all_mode <功能名>. --all 模式下默认执行, 显式 --no-<功能名> 排除
+all_mode() {
+    [[ -z "${explicit_no[$1]:-}" ]]
 }
 
 check_env || exit 255
@@ -739,17 +767,18 @@ if [[ $# -eq 0 ]]; then
 fi
 
 if [ "${_arg_all}" == "on" ]; then
-    config_selinux
-    config_runlevel
-    config_services
-    config_timezone
-    disable_firewall
-    config_ssh
-    config_user_env
-    config_system_parameter
-    config_lang
-    config_sar
-    config_rc_local
+    all_mode config_selinux && config_selinux
+    all_mode config_runlevel && config_runlevel
+    all_mode config_services && config_services
+    all_mode config_timezone && config_timezone
+    all_mode disable_firewall && disable_firewall
+    all_mode config_ssh && config_ssh
+    all_mode config_user_env && config_user_env
+    all_mode config_system_parameter && config_system_parameter
+    all_mode config_lang && config_lang
+    all_mode config_sar && config_sar
+    all_mode config_rc_local && config_rc_local
+    all_mode install_fhmv && install_fhmv
     if [[ -n "${_arg_ntp_server}" ]]; then
         ntp_server
     fi

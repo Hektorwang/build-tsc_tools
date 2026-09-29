@@ -29,7 +29,7 @@ shopt -s dotglob
 
 WORK_DIR="$(dirname "$(readlink -f "$0")")"
 source "${WORK_DIR}"/../../func
-logfile=/var/log/tsc/tsc_sysinti.log
+log_file=/var/log/tsc/tsc_sysinit.log
 
 mkdir -p /var/log/tsc/
 

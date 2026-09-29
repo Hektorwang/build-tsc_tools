@@ -5,6 +5,8 @@
 # =============================================================================
 # 本文件被所有 lib/ 模块 source 使用，不可直接执行。
 # 不设置 set -o errexit 等 strict mode，由调用方自行决定。
+# 设计约束: 本模块 stdout 为纯 JSON(供 zabbix 等读取), lib/ 内禁止调用
+# LOG* 等人类可读输出污染 stdout。
 #
 # 提供:
 #   常量: INVALID_SNS, LD_KEYWORDS, PD_KEYWORDS

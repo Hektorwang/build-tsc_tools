@@ -12,7 +12,6 @@ BINARY_TOOLS_DIR="$(readlink -f "$(dirname "$0")")"
 # 目前支持的二进制工具
 readonly -A SUPPORTED_BINARY_TOOLS=(
     ["fio"]="-v"
-    ["fping"]="-v"
     ["glow"]="-v"
     ["iperf3"]="-v"
     ["jq"]="-V"
@@ -59,31 +58,68 @@ _install_raid_cli() {
     if [[ $1 != "pm" ]]; then
         return 0
     fi
-    local is_sas3ircu
-    is_sas3ircu="$("${BINARY_TOOLS_DIR}/sas3ircu/sas3ircu-$(arch)" list &>/dev/null)"
-    if [[ "${is_sas3ircu:-1}" -ne 0 ]]; then
-        \cp "${BINARY_TOOLS_DIR}/sas3ircu/sas3ircu-$(arch)" /bin/sas3ircu
-        chmod +x /bin/sas3ircu
-        LOGSUCCESS "Installed /bin/sas3ircu"
+    local probe_output probe_rc ctl_count sas3ircu_detected=false
+
+    # sas3ircu: list 成功(检测到 SAS3 控制器)才安装; 原先命令替换内
+    # &>/dev/null 把输出连同退出码一并丢弃, 探测恒真变成一律安装
+    local sas3ircu_bin="${BINARY_TOOLS_DIR}/sas3ircu/sas3ircu-$(arch)"
+    if [[ ! -f "${sas3ircu_bin}" ]]; then
+        LOGWARNING "sas3ircu binary not bundled, skip install"
+    else
+        probe_output="$("${sas3ircu_bin}" list 2>&1)" && probe_rc=0 || probe_rc=$?
+        if [[ ${probe_rc} -eq 0 ]]; then
+            sas3ircu_detected=true
+            if \cp "${sas3ircu_bin}" /bin/sas3ircu && chmod +x /bin/sas3ircu; then
+                LOGSUCCESS "Installed /bin/sas3ircu"
+            else
+                LOGERROR "Failed to install /bin/sas3ircu"
+            fi
+        fi
     fi
-    local is_storcli
-    is_storcli="$(
-        "${BINARY_TOOLS_DIR}/storcli64/storcli64-noarch" show 2>&1 |
-            grep -oP "(?<=^Number of Controllers = )\d+"
-    )"
-    if [[ "${is_storcli:-0}" -ne 0 ]]; then
-        \cp "${BINARY_TOOLS_DIR}/storcli64/storcli64-noarch" /bin/storcli64
-        ln -sf /bin/storcli64 /bin/storcli
-        chmod +x /bin/storcli64
-        LOGSUCCESS "Installed /bin/storcli64 /bin/storcli"
+
+    # storcli: SAS3 卡(mpt3sas/HBA)的 RAID 状态用 storcli 读取不准,
+    # 检测到 SAS3 卡后跳过 storcli, 仅在无 SAS3 卡且存在 MegaRAID
+    # 控制器时安装。
+    # storcli 无控制器时也返回 0, 须从输出中取控制器数; 二进制本身无法
+    # 运行(缺失/架构不符)时原先被静默跳过, 现告警
+    if "${sas3ircu_detected}"; then
+        LOGINFO "SAS3 controller detected, skip storcli (storcli status is inaccurate for SAS3 IR cards)"
+    else
+        local storcli_bin="${BINARY_TOOLS_DIR}/storcli64/storcli64-noarch"
+        if [[ ! -f "${storcli_bin}" ]]; then
+            LOGWARNING "storcli64 binary not bundled, skip install"
+        else
+            probe_output="$("${storcli_bin}" show 2>&1)" && probe_rc=0 || probe_rc=$?
+            if [[ ${probe_rc} -ne 0 ]]; then
+                LOGWARNING "storcli64 probe failed (rc=${probe_rc}), skip install: $(head -n 1 <<<"${probe_output}")"
+            else
+                ctl_count="$(grep -oP '(?<=^Number of Controllers = )\d+' <<<"${probe_output}")"
+                if [[ -z "${ctl_count}" ]]; then
+                    LOGWARNING "cannot determine storcli controller count, skip install"
+                elif [[ ${ctl_count} -ne 0 ]]; then
+                    if \cp "${storcli_bin}" /bin/storcli64 && ln -sf /bin/storcli64 /bin/storcli && chmod +x /bin/storcli64; then
+                        LOGSUCCESS "Installed /bin/storcli64 /bin/storcli"
+                    else
+                        LOGERROR "Failed to install /bin/storcli64 /bin/storcli"
+                    fi
+                fi
+            fi
+        fi
     fi
-    local arcconf_output
-    arcconf_output=$("${BINARY_TOOLS_DIR}/arcconf/arcconf-$(arch)" GETCONFIG 1 PD 2>&1)
-    exit_code=$?
-    if [[ ${exit_code} -eq 0 ]] && ! echo "${arcconf_output}" | grep -q "Controllers found: 0"; then
-        \cp "${BINARY_TOOLS_DIR}/arcconf/arcconf-$(arch)" /bin/arcconf
-        chmod +x /bin/arcconf
-        LOGSUCCESS "Installed /bin/arcconf"
+
+    # arcconf: 退出码为 0 且控制器数非 0 才安装 (Adaptec, 与 LSI 互不影响)
+    local arcconf_bin="${BINARY_TOOLS_DIR}/arcconf/arcconf-$(arch)"
+    if [[ ! -f "${arcconf_bin}" ]]; then
+        LOGWARNING "arcconf binary not bundled, skip install"
+    else
+        probe_output="$("${arcconf_bin}" GETCONFIG 1 PD 2>&1)" && probe_rc=0 || probe_rc=$?
+        if [[ ${probe_rc} -eq 0 ]] && ! grep -q "Controllers found: 0" <<<"${probe_output}"; then
+            if \cp "${arcconf_bin}" /bin/arcconf && chmod +x /bin/arcconf; then
+                LOGSUCCESS "Installed /bin/arcconf"
+            else
+                LOGERROR "Failed to install /bin/arcconf"
+            fi
+        fi
     fi
 }
 

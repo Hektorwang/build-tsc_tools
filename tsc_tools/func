@@ -73,7 +73,50 @@ LOGERROR() { __log "ERROR" "$@"; }
 export -f LOGDEBUG LOGINFO LOGSUCCESS LOGWARNING LOGERROR
 
 #######################################
-# 删除前导和末尾的空格、制表符、换行符、回车符、全角空格
+# 删除前导和末尾的空白字符 (纯 bash 实现, str_strip 的退化/快速路径)
+# 覆盖: 空格、制表符、换行符、回车符、换页符、垂直制表符、
+#       不间断空格 (U+00A0)、全角空格 (U+3000)
+# 说明: NBSP/全角空格用 UTF-8 字节序列匹配, 不依赖 locale, 无子进程.
+#       热循环中建议直接调用本函数, 跳过 str_strip 的探测与 perl 启动开销.
+#       不要用 ${var:偏移} 截断, 其偏移在 UTF-8 locale 按字符
+#       计数、在 C locale 按字节计数, 行为不一致.
+# Globals:
+# Arguments:
+#   $1 需要strip的字符串
+# Outputs:
+#   $1经过strip的值
+# Returns:
+#   None
+#######################################
+function str_strip_alternative {
+    local str="${1:-}"
+    local ws=$' \t\n\r\f\v'
+    local nbsp=$'\xC2\xA0'      # U+00A0 的 UTF-8 编码
+    local ispace=$'\xE3\x80\x80' # U+3000 的 UTF-8 编码
+    while :; do
+        case $str in
+            ["${ws}"]*)   str=${str#["${ws}"]} ;;
+            "${nbsp}"*)   str=${str#"${nbsp}"} ;;
+            "${ispace}"*) str=${str#"${ispace}"} ;;
+            *) break ;;
+        esac
+    done
+    while :; do
+        case $str in
+            *["${ws}"])   str=${str%["${ws}"]} ;;
+            *"${nbsp}")  str=${str%"${nbsp}"} ;;
+            *"${ispace}") str=${str%"${ispace}"} ;;
+            *) break ;;
+        esac
+    done
+    printf '%s' "${str}"
+}
+export -f str_strip_alternative
+
+#######################################
+# 删除前导和末尾的空白字符 (整串语义, 同 python 的 str.strip())
+# 优先使用 perl, 覆盖全部 Unicode 空白字符 (含 U+2000-200A/U+202F/U+205F 等);
+# perl 不存在时退化为 str_strip_alternative (ASCII 空白 + NBSP + 全角空格).
 # Globals:
 # Arguments:
 #   $1 需要strip的字符串
@@ -83,8 +126,12 @@ export -f LOGDEBUG LOGINFO LOGSUCCESS LOGWARNING LOGERROR
 #   None
 #######################################
 function str_strip {
-    local str="$1"
-    echo -n "$str" | sed -E 's/^[[:space:]\xC2\xA0\u3000]+|[[:space:]\xC2\xA0\u3000]+$//g'
+    local str="${1:-}"
+    if command -v perl &>/dev/null; then
+        printf '%s' "${str}" | perl -0777 -CSD -pe 's/^\s+|\s+$//g'
+    else
+        str_strip_alternative "${str}"
+    fi
 }
 export -f str_strip
 
@@ -299,7 +346,8 @@ function _conv2sec {
     # 使用正则提取数字和单位（兼容小数）
     if [[ "$input" =~ ^([0-9]+(\.[0-9]+)?)([smhdSMHD]?)$ ]]; then
         number="${BASH_REMATCH[1]}"
-        unit=$(echo "$unit" | tr '[:upper:]' '[:lower:]')
+        unit="${BASH_REMATCH[3]}" # 原先漏取此捕获组, 单位恒为空, 1m/1h/1d 均按秒处理
+        unit="${unit,,}"          # 单位统一转小写 (SMHD → smhd)
         case "$unit" in
         "") result="$number" ;; # 默认为秒
         "s") result="$number" ;;

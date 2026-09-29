@@ -25,9 +25,6 @@
 - tsc_sysinfo  
   系统运行环境采集检查和基础环境完工检查工具  
   迁移中, 尚未完成  
-- tsc_fping  
-  fping  
-  `fping` 是一个主机连通性扫描工具,相比于 `ping` 工具可以批量扫描主机.  
 - tsc_drop_cache  
   释放系统内存缓存  
   通过 `echo 3 > /proc/sys/vm/drop_caches` 手动释放内存缓存, 以缓解系统压力. 效果取决于系统可释放的缓存.  

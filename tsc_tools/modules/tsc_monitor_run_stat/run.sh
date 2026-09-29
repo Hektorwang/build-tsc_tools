@@ -26,15 +26,27 @@ get_process_id() {
         if [[ "${process_pattern}" =~ ^[0-9]+$ ]]; then
             echo "${process_pattern}"
         else
-            echo "ERROR: process_pattern must be a valid PID when mode is PID"
+            echo "ERROR: process_pattern must be a valid PID when mode is PID" >&2
             exit 1
         fi
         ;;
     PNAME)
-        pgrep -f "${process_pattern}" | head -n 1
+        # 输出全部匹配的 PID(每行一个), 不做截断, 匹配个数由调用方判断。
+        # pgrep -f 按完整命令行匹配, 会把"命令行含 pattern"的自身进程链
+        # (tsc 分发器等祖先, 见 self_pids)与本脚本派生的瞬时 fork 一并匹配
+        # 进来(procsub/管道子进程 fork 后 exec 前的 cmdline 与脚本相同, 存在
+        # 被 pgrep 竞态命中的窗口), 全部排除:
+        #   self_pids                  - 自 $$ 沿 PPid 上溯到 init 的祖先链
+        #   cmdline 含 $0 的候选        - 本脚本自身的 fork
+        # pgrep 无匹配返回 1, 由 || true 兜底, 空列表由调用方处理
+        pgrep -f "${process_pattern}" | while read -r _cand; do
+            [[ " ${self_pids} " == *" ${_cand} "* ]] && continue
+            [[ "$(tr '\0' ' ' < "/proc/${_cand}/cmdline" 2>/dev/null)" == *"${0}"* ]] && continue
+            echo "${_cand}"
+        done || true
         ;;
     *)
-        echo "ERROR: mode must be PID or PNAME"
+        echo "ERROR: mode must be PID or PNAME" >&2
         exit 1
         ;;
     esac
@@ -46,7 +58,7 @@ get_cpu_used_percentage() {
     local cpu_stat_2 cpu_total_time_2 cpu_idle_time_2 cpu_iowait_time_2 proc_time_2
     local idle_percentage iowait_percentage proc_cpu_percentage total_diff
     if ! ps -q "$proc_id" &>/dev/null; then
-        echo "Process $proc_id does not exist."
+        echo "Process $proc_id does not exist." >&2
         return 1
     fi
     cpu_stat_1="$(head -n 1 /proc/stat | cut -d ' ' -f 2-)"
@@ -77,7 +89,7 @@ get_process_rss_size() {
     local proc_id="$1"
     local rss_size=0
     if ! ps -q "${proc_id}" &>/dev/null; then
-        echo "Process ${proc_id} does not exist."
+        echo "Process ${proc_id} does not exist." >&2
         return 1
     fi
     rss_size="$(awk '/^Rss:/{s+=$2}END{printf "%d",s/1024}' /proc/"${proc_id}"/smaps)"
@@ -88,7 +100,7 @@ get_process_swap_size() {
     local proc_id="$1"
     local swap_size=0
     if ! ps -q "${proc_id}" &>/dev/null; then
-        echo "Process ${proc_id} does not exist."
+        echo "Process ${proc_id} does not exist." >&2
         return 1
     fi
     swap_size="$(awk '/^Swap:/{s+=$2}END{printf "%d",s/1024}' /proc/"${proc_id}"/smaps)"
@@ -98,7 +110,7 @@ get_process_swap_size() {
 get_process_fd_cnt() {
     local proc_id="$1"
     if ! ps -q "${proc_id}" &>/dev/null; then
-        echo "Process ${proc_id} does not exist."
+        echo "Process ${proc_id} does not exist." >&2
         return 1
     fi
     local fd_cnt
@@ -126,6 +138,11 @@ if [ -z "${process_pattern}" ]; then
     usage
     exit 1
 fi
+if [ "${mode}" == "PID" ] && ! [[ "${process_pattern}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: process_pattern must be a valid PID when mode is PID"
+    usage
+    exit 1
+fi
 if [ "${delay_interval}" -lt 2 ]; then
     echo "WARN: sleep time less than 2, set to 2"
     delay_interval=2
@@ -133,6 +150,16 @@ fi
 
 cpu_cnt="$(nproc)"
 mem_total_size="$(awk '/^MemTotal:/{printf "%d", $2/1024/1024}' /proc/meminfo)"
+
+# 构造自身进程链的排除列表(自 $$ 沿 PPid 上溯到 init, 空格分隔):
+# pgrep -f 会把命令行含 pattern 的祖先进程(如 tsc 分发器)一并匹配进来
+self_pids=""
+_p="$$"
+while [[ -n "${_p}" && "${_p}" != "1" && "${_p}" != "0" ]]; do
+    self_pids="${self_pids:+${self_pids} }${_p}"
+    _p="$(awk '/^PPid:/{print $2}' "/proc/${_p}/status" 2>/dev/null || true)"
+done
+unset _p
 
 index=0
 
@@ -148,11 +175,20 @@ while true; do
 
     index="$((index + 1))"
 
-    proc_id="$(get_process_id "${mode}" "${process_pattern}")"
-    proc_cnt="$(echo "${proc_id}" | wc -w)"
+    mapfile -t proc_ids < <(get_process_id "${mode}" "${process_pattern}")
 
-    if [[ "${proc_cnt}" -ne 1 ]]; then
-        echo -e "${date_str}\tcan not get only process id, reset <process_pattern>: ${proc_id}"
+    if [[ "${#proc_ids[@]}" -eq 0 ]]; then
+        echo -e "${date_str}\tprocess '${process_pattern}' not found."
+        exit 1
+    fi
+    if [[ "${#proc_ids[@]}" -ne 1 ]]; then
+        echo -e "${date_str}\tcan not get only process id, reset <process_pattern>: ${proc_ids[*]}"
+        exit 1
+    fi
+    proc_id="${proc_ids[0]}"
+
+    if ! ps -q "${proc_id}" &>/dev/null; then
+        echo -e "${date_str}\tprocess '${process_pattern}' (pid ${proc_id}) does not exist."
         exit 1
     fi
 
