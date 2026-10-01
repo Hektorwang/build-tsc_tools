@@ -108,6 +108,9 @@ chk "raid_controllers 条目多余键被拦截" false "$(vstatic "${T}/bad17.jso
 jq '.storage.mountpoint[0].extra = 1' "${T}/runtime_filled.json" > "${T}/bad18.json"
 chk "mountpoint 条目多余键被拦截" false "$(vruntime "${T}/bad18.json")"
 
+jq '.memory[0].extra = 1' "${T}/static_filled.json" > "${T}/bad19.json"
+chk "memory 条目多余键被拦截" false "$(vstatic "${T}/bad19.json")"
+
 jq 'del(.warning)' "${T}/runtime_filled.json" > "${T}/bad5.json"
 chk "运行时缺 warning 被拦截" false "$(vruntime "${T}/bad5.json")"
 

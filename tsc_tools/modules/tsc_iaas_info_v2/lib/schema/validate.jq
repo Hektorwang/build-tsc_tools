@@ -90,7 +90,10 @@ def validate_static:
   and (.cpu.cpu_model | _str_or_null)
   and (.cpu.cpu_cnt | _num_or_null)
   and (.memory | _arr)
-  and all(.memory[]; _obj and has("size") and has("locator") and has("unit")
+  and all(.memory[];
+        _obj
+        and ((keys_unsorted | sort) == ["locator","size","unit"])
+        and has("size") and has("locator") and has("unit")
         and (.size | _num_or_null) and (.locator | _str_or_null) and (.unit | _str_or_null))
   and (.storage | _arr)
   and all(.storage[]; valid_storage_entry)

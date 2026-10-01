@@ -1,6 +1,6 @@
 # tsc_iaas_info_v2 开发者文档 (README_DEV)
 
-> 本文讲**代码怎么工作、怎么改**。外部契约/适配器契约/迁移计划见 [DESIGN.md](./DESIGN.md)（v0.2）。
+> 本文讲**代码怎么工作、怎么改**。外部契约/适配器契约/迁移计划见 [DESIGN.md](../tsc_iaas_info/DESIGN.md)（v0.4）。
 > 模式命名：`--runtime` 为 runtime 模式；不带 `--runtime` 为**资产模式**（原"静态模式"，2026-09-30 定名）。
 
 ---
@@ -21,7 +21,7 @@ tsc --tsc_iaas_info_v2 [--runtime]
 | jsonio 管线（collect_json/降级/骨架填充/validate） | sn/contract/location 历史继承 | 阈值告警 + 硬件变更对比 |
 | schema 骨架 + validate.jq | 落盘/MD5/软链 | stdout 输出 |
 
-runtime 的存储监控（`storage_threshold` 已预留）将在存储阶段消费适配器 health 投影，管线零新增。
+runtime 存储监控已全部接通（阶段 2.5 完成）：挂载点监控消费 `storage_threshold`（块 B），RAID health 投影已接入（块 C/D），详见 lib/runtime_main.sh。
 
 ## 2. 资产模式数据流（四层职责，每层只干一件事）
 
@@ -121,7 +121,8 @@ memory/storage/sn 走同一条路，只是采集器与合并方式不同（数�
 | 3 | dmidecode 缺失时 memory=[] 且**不记** degraded——"成功但空"与"失败"不区分 | 语义边角 | 待定 |
 | 4 | 同机两种 CPU 型号时 cpu_model 为含换行字符串（sort -u 多行） | 与 v1 一致 | 保留 |
 | 5 | ~~采集器多吐的键会经 `*` 合并混入文档~~ | **已修** | validate 升级键集合严格校验：storage/raid_controllers/mountpoint 条目键集合须与骨架示例条目完全一致，多余键拦截（test_schema 3 例锁定） |
-| 6 | `--storage_threshold` 已解析校验但 runtime 存储监控未接（等适配器 health 投影） | 预留 | 阶段2 接入 |
+| 6 | ~~`--storage_threshold` 已解析校验但 runtime 存储监控未接~~ | **已修** | 阶段2.5 已实现（monitor_mountpoints + raid_health_json 全部接通） |
+| 7 | lsi/sas_ir/adaptec 的 PD 条目 `ctl_no` 恒 0（硬编码），多控制器机器 `storage[].ctl_no` 失真 | 一机多卡不支持（DESIGN §10，2026-10-01 决策） | 关闭，不改代码 |
 
 ## 6. schema 演进操作手册（加项/改项照单执行）
 
@@ -208,7 +209,7 @@ bash tests/try_card.sh lsi /tmp/real_lsi
 ## 7. 测试
 
 ```bash
-bash tests/test_schema.sh           # 骨架自洽 + validate 自测(24 例, 含多余键拦截)
+bash tests/test_schema.sh           # 骨架自洽 + validate 自测(25 例, 含多余键拦截)
 bash tests/test_card_direct.sh      # direct(parse 形态) + 助手 + 降级管线(18 例)
 bash tests/test_card_lsi.sh         # lsi 适配器(4 例)
 bash tests/test_card_sas3.sh        # sas3 适配器(3 例)

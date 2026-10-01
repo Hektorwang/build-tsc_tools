@@ -3,12 +3,12 @@
 # =============================================================================
 # lib/collectors/memory.sh — 内存静态信息采集 (v2)
 # =============================================================================
-# 复刻自 v1 collect_mem_info, 采集逻辑不变; 被 source 使用，不可直接执行。
+# 复刻自 v1 collect_mem_info(差异: 未知单位不再静默跳过, 记入降级); 被 source 使用，不可直接执行。
 #
 # 提供函数:
 #   collect_mem_info()
 #     数据来源: dmidecode -t17, Size+Locator 两行合并处理, 过滤空插槽
-#     单位处理: MB → GB; 其他单位跳过
+#     单位处理: MB → GB; 其他单位跳过并记降级(memory.unit_<单位>)
 #     输出 JSON: {memory: [{size: N, locator: "...", unit: "G"}, ...]}
 # =============================================================================
 
@@ -31,6 +31,7 @@ collect_mem_info() {
         if [[ "${size_unit}" == "MB" ]]; then
             size_val="$(awk "BEGIN{printf \"%.2f\", ${size_val} / 1024}")"
         elif [[ "${size_unit}" != "GB" ]]; then
+            degraded_add "memory.unit_${size_unit}"
             continue
         fi
 

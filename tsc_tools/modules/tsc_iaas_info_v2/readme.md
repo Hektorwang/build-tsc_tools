@@ -14,7 +14,7 @@ usage: tsc --tsc_iaas_info_v2 [--runtime] [--cpu_threshold 0-100] [--sn S]
 
 ## 定位
 
-与 `tsc_iaas_info`(v1)**平行开发、互不影响**的重构版, 按 `DESIGN.md`(本目录)实施:
+与 `tsc_iaas_info`(v1)**平行开发、互不影响**的重构版, 按 `DESIGN.md`(../tsc_iaas_info/DESIGN.md)实施:
 骨架驱动的 JSON 输出、适配器契约、fixture 测试。
 
 开发者文档（代码怎么工作/怎么改、schema 演进操作手册、已知缺陷）见 [README_DEV.md](./README_DEV.md)。
@@ -68,7 +68,7 @@ tsc --tsc_iaas_info_v2 --cpu_threshold 80  # 阈值为百分比 0-100
 ## 测试
 
 ```bash
-bash tests/test_schema.sh        # 骨架/校验自测(21 例)
+bash tests/test_schema.sh        # 骨架/校验自测(25 例)
 bash tests/test_card_direct.sh   # direct(parse 形态) + 助手 + 降级管线(18 例)
 bash tests/test_card_lsi.sh      # lsi 适配器(4 例)
 bash tests/test_card_sas3.sh     # sas3 适配器(3 例)
