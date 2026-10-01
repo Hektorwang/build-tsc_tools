@@ -1,5 +1,24 @@
 # release-note
 
+## Version=2.1.3
+
+1. fix(tsc_iaas_info_v2): memory 采集器未知单位不再静默跳过, 记入降级(`memory.unit_<单位>`)
+2. feat(tsc_iaas_info_v2): validate memory 条目键集合严格校验(与 storage/raid_controllers/mountpoint 同构), 配套 test 25 例
+3. fix(tsc_iaas_info_v2): adaptec flushpd printf 末尾多余参数(笔误, awk 忽略多余实参, 无行为变化)
+4. fix(tsc_iaas_info_v2): 测试框架 assert_json_has_key/assert_json_no_key/assert_valid_json 失败由 return 1 改 exit 1, 消除无 errexit 子 shell 下的吞失败
+5. docs(tsc_iaas_info_v2): 一机多卡不支持决策落 DESIGN §10(v0.3/v0.4); 文档同步(测试计数/DESIGN 指针/资产模式命名/存储监控现状); 新增开放问题 §9.3(runtime monitor 未包降级)
+
+## Version=2.1.2
+
+1. refactor: 移除 fping 相关内容（tsc_fping 模块、二进制及安装清单条目）
+2. fix(func): 重写 `str_strip`: 修复 sed 不支持 `\u` 转义导致误剥首尾 `u`/`3`/`0` 字符的问题; 改为优先使用 perl 以覆盖全部 Unicode 空白字符, 无 perl 时自动退化为新增的纯 bash 实现 `str_strip_alternative`(不依赖 locale, 覆盖 NBSP(U+00A0) 与全角空格(U+3000))
+3. fix(tsc_sysinit): `install_fhmv` 增加找不到 rpm 的前置校验与同版本跳过, 保持卸旧装新方式(该包 %post 会 `chattr +i` 且 %postun 无升级守卫, 不适用 `rpm -Uvh`); `--all` 模式纳入 `install_fhmv`, 并支持 `--no-` 在 `--all` 下按功能排除
+4. fix(build): build.sh 打包前检查 dos2unix 是否可用, 缺失时明确报错退出
+5. fix(tsc_netspeed): 修复无参数时 `IFNAME="$1"` 在 nounset 下报 unbound variable 的问题, 现可正常进入 usage 帮助; 接口不存在时前置校验并列出可用接口(原先进循环后才失败且报错双份); 8 段重复的统计读取收拢为 `read_stat`(网卡中途消失的保护不变)
+6. fix(tsc_sysinit): 日志变量修正为 `log_file` 并更正文件名拼写 `tsc_sysinit.log`; 原变量名 `logfile` 与 func `__log` 读取的 `log_file` 不匹配, 日志从未写入文件
+7. fix(tsc_drop_cache): 删除复制的 `__log/LOG*`, 改为 source 公共 `func`(与其他模块一致); 去除重复的 `script_name` 定义与多余的 `SETCOLOR_*` 导出; `set -o posix` 修正为 `set +o posix`; 不设 `TSC_FUNC` 守卫(经 tsc 分发器调用时子进程仅继承被 `export -f` 的函数, `__log` 不在其中, 跳过 source 会在首次打日志时报 `__log: command not found`)
+8. docs(tsc_iaas_info): 在 run.sh 与 lib/common.sh 注明设计约束——本模块 stdout 为纯 JSON(供 zabbix 等读取), 本模块及 lib/ 禁止调用 `LOG*` 污染输出; 模块实际使用的 func 函数均已可正常获得, `TSC_FUNC` 守卫维持现状
+
 ## Version=2.1.1
 
 1. 回滚 `2.0.5` 的错误修改
