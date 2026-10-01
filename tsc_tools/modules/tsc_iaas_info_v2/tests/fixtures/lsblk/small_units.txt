@@ -1,0 +1,1 @@
+NAME="sdd" MODEL="Generic Flash" SERIAL="FTP0001" SIZE="966.4M" TYPE="disk" VENDOR="SanDisk " TRAN="usb" WWN=""

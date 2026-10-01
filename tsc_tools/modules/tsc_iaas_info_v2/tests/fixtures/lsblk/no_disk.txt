@@ -1,0 +1,2 @@
+NAME="loop0" MODEL="" SERIAL="" SIZE="4M" TYPE="loop" VENDOR="" TRAN="" WWN=""
+NAME="sr0" MODEL="CD-ROM" SERIAL="" SIZE="1024M" TYPE="rom" VENDOR="" TRAN="" WWN=""

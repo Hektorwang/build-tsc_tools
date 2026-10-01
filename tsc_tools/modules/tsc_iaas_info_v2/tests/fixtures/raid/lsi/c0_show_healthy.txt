@@ -1,0 +1,70 @@
+CLI Version = 007.1703.0000.0000 May 10, 2019
+Operating system = Linux 4.18.0-305.el8.x86_64
+Status Code = 0
+Status = Success
+Description = None
+
+/c0 :
+========================================================================
+EID:Slt DID State DG       Size Intf Med SED PI SeSz Model            Sp
+------------------------------------------------------------------------
+
+Basics :
+======
+Controller = 0
+Model = AVG-9361-8i
+Serial Number = SP12345678
+Current Controller Date/Time = 01/01/2024 12:00:00
+Current System Date/time = 01/01/2024 12:00:00
+SAS Address =  500605b00ab12345
+
+Version :
+=========
+Firmware Package Build = 24.21.0-0138
+Firmware Version = 4.680.00-8291
+Driver Name = megaraid_sas
+Driver Version = 07.714.04.00-rc1
+
+Bus :
+=====
+Vendor Id = 0x1000
+Device Id = 0x005B
+SubVendorId = 0x1000
+SubDeviceId = 0x9361
+Host Interface = PCI-E
+Device Interface = SAS-12G
+Bus Number = 1
+Device Number = 0
+Function Number = 0
+
+Pending Properties :
+====================
+None
+
+Basics :
+========
+Controller = 0
+Virtual Drives = 1
+  Virtual Drive = 0 (Target Id = 0)
+Physical Drives = 4
+BBU = Present
+Current Size of FW Cache (MB) = 1024
+Current Size of Cache (MB) = 1024
+
+VD LIST :
+=======================================================================
+DG/VD TYPE  State Access Consist Cache Cac  sCC     Size Name
+-----------------------------------------------------------------------
+0/0   RAID5 Optl  RW     Yes     RWTD  -    ON  2.181 TB
+=======================================================================
+
+PD LIST :
+=======================================================================
+EID:Slt DID State DG       Size Intf Med SED PI SeSz Model            Sp
+-----------------------------------------------------------------------
+252:0    14 Onln   0 744.687 GB SAS  HDD N   N  512B ST900MM0168      U
+252:1    15 Onln   0 744.687 GB SAS  HDD N   N  512B ST900MM0168      U
+252:2    16 Onln   0 744.687 GB SAS  HDD N   N  512B ST900MM0168      U
+252:3    17 Onln   0 744.687 GB SAS  HDD N   N  512B ST900MM0168      U
+=======================================================================
+

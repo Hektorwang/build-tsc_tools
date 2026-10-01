@@ -1,0 +1,63 @@
+CLI Version = 007.1703.0000.0000 May 10, 2019
+Operating system = Linux 4.18.0-305.el8.x86_64
+Status Code = 0
+Status = Success
+Description = None
+
+/c0 :
+========================================================================
+
+Basics :
+======
+Controller = 0
+Model = AVG-9361-8i
+Serial Number = SP12345678
+
+VD LIST :
+=======
+DG/VD Type State Access Consist Cache sCC Size Name
+-------------------------------------------------------------
+0/0   RAID1 Optl  RW     Yes     RWBD  -    744.687 GB LogicalDrv_0
+
+PD LIST :
+=======
+EID:Slt DID State DG       Size Intf Med SED PI SeSz Model            Sp Type
+----------------------------------------------------------------------------
+252:0     4 Onln   0 744.687 GB SAS  HDD N   N  512B ST900MM0168      U  -
+252:1     5 Onln   0 744.687 GB SAS  HDD N   N  512B ST900MM0168      U  -
+
+TOPOLOGY :
+========
+
+------------------------------------------------------------------------------
+Ctl = 0
+-----------------------------------
+Drive /c0/e252/s0 - Detailed Information
+========================================
+
+Drive /c0/e252/s0 State :
+=========================
+           State = Onln
+           Predictive Failure Count = 0
+
+Drive /c0/e252/s0 Device attributes :
+=====================================
+           Manufacturer Id = SEAGATE
+           Model Number = ST900MM0168
+           Serial Number = Z1Z3ABCD
+           WWN = 5000c5007e123456
+           Device Firmware Level = 0004
+
+Drive /c0/e252/s1 - Detailed Information
+========================================
+
+Drive /c0/e252/s1 State :
+=========================
+           State = Onln
+
+Drive /c0/e252/s1 Device attributes :
+=====================================
+           Manufacturer Id = SEAGATE
+           Model Number = ST900MM0168
+           Serial Number = Z1Z3EFGH
+           WWN = 5000c5007e165432

@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "schema_version": 2,
+    "tool_version": null,
+    "generated_at": null,
+    "degraded": []
+  },
+  "cpu": {
+    "used_percent": null,
+    "iowait_percent": null
+  },
+  "memory": {
+    "ram": {
+      "total": null,
+      "used": null,
+      "used_percent": null,
+      "unit": null
+    },
+    "swap": {
+      "total": null,
+      "used": null,
+      "used_percent": null,
+      "unit": null
+    }
+  },
+  "storage": {
+    "mountpoint": [],
+    "raid": []
+  },
+  "warning": {
+    "cpu_usage": null,
+    "memory_usage": null,
+    "storage_usage": null,
+    "inode_usage": null,
+    "storage_unwritable": null,
+    "pd_cnt_diffrent": null,
+    "direct_disk_cnt_diffrent": null,
+    "raid_status": null
+  }
+}

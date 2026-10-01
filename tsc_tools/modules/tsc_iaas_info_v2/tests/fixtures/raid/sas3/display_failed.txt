@@ -1,0 +1,75 @@
+LSI Corporation SAS3 IR Configuration Utility.
+Version 16.00.00.00 (2017.11.09)
+Copyright (c) 2009-2017 LSI Corporation. All rights reserved.
+
+Read configuration has been initiated for controller 0
+------------------------------------------------------------------------
+Controller information
+------------------------------------------------------------------------
+  Controller type                         : SAS3008
+  BIOS version                            : 8.37.02.00
+  Firmware version                        : 16.00.01.00
+  Channel description                     : 1 Serial Attached SCSI
+  Initiator ID                            : 0
+  Maximum physical devices                : 1023
+  Concurrent commands supported           : 10240
+  Slot                                    : 3
+  Segment                                 : 0
+  Bus                                     : 3
+  Device                                  : 0
+  Function                                : 0
+  RAID Support                            : Yes
+------------------------------------------------------------------------
+IR Volume information
+------------------------------------------------------------------------
+  IR volume 1
+    Volume Name                           : Volume0
+    RAID level                            : RAID1
+    Status of volume                      : Degraded (DGD)
+    Size (in MB)                          : 857375
+    Physical hard disks                   :
+    PHY[0] Enclosure#/Slot#              : 1/0
+    PHY[1] Enclosure#/Slot#              : 1/1
+------------------------------------------------------------------------
+Physical device information
+------------------------------------------------------------------------
+  Initiator at ID #0
+
+  Device is a Hard disk
+    Enclosure #                           : 1
+    Slot #                                : 0
+    SAS Address                           : 4433221-1-0500-0000
+    State                                 : Ready (RDY)
+    Size (in MB)/(in sectors)             : 857375/1755791359
+    Manufacturer                          : SEAGATE
+    Model Number                          : ST900MM0168
+    Firmware Revision                     : CN03
+    Serial No                             : W1234567
+    GUID                                  : 5000c5007e3a1234
+    Protocol                              : SAS
+    Drive Type                            : ENTERPRISE
+
+  Device is a Hard disk
+    Enclosure #                           : 1
+    Slot #                                : 1
+    SAS Address                           : 4433221-1-0600-0000
+    State                                 : Failed (FLD)
+    Size (in MB)/(in sectors)             : 857375/1755791359
+    Manufacturer                          : SEAGATE
+    Model Number                          : ST900MM0168
+    Firmware Revision                     : CN03
+    Serial No                             : W2345678
+    GUID                                  : 5000c5007e3a5678
+    Protocol                              : SAS
+    Drive Type                            : ENTERPRISE
+
+------------------------------------------------------------------------
+Enclosure information
+------------------------------------------------------------------------
+  Enclosure#                              : 1
+  Logical ID                              : 5000c5007e3a0000
+  Numslots                                : 8
+  StartSlot                               : 0
+------------------------------------------------------------------------
+
+SAS3IRCU: Utility Completed Successfully.

@@ -1,0 +1,26 @@
+Controllers found: 1
+----------------------------------------------------------------------
+Controller information
+----------------------------------------------------------------------
+   Controller ID             : 0
+   Controller Model          : Adaptec 6805
+   Controller Status         : Optimal
+
+----------------------------------------------------------------------
+Logical device information
+----------------------------------------------------------------------
+Logical Device number 0
+   Logical Device name       : LogicalDrv 0
+   RAID level                : 5
+   Status of Logical Device  : Optimal
+   Size                      : 11175936 MB
+   Stripe-unit size          : 256 KB
+   Read-cache setting        : Enabled
+   Write-cache setting       : Enabled (write-back)
+   Partitioned               : No
+   Protected by Hot-Spare    : No
+   Bootable                  : Yes
+   Failed stripes            : No
+   Power settings            : Disabled
+
+Command completed successfully.

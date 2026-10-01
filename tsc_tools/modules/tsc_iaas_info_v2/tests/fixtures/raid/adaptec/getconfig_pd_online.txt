@@ -1,0 +1,31 @@
+Controllers found: 1
+----------------------------------------------------------------------
+Physical Device information
+----------------------------------------------------------------------
+      Device #0
+         Device is a Hard drive
+         State                              : Online,Spun Up
+         Supported                          : Yes
+         Transfer Speed                     : SATA 6.0 Gb/s
+         Reported Channel,Device(T:L)       : 0,0(0:0)
+         Reported Location                  : Connector 0, Device 0
+         Vendor                             : SEAGATE
+         Model                              : ST4000NM0023
+         Firmware                           : 0004
+         Serial number                      : Z1Z3ABCD
+         World-wide name                    : 5000C5007E123456
+         Total Size                         : 3815447 MB
+         Power State                        : Full rpm
+      Device #1
+         Device is a Hard drive
+         State                              : Online,Spun Up
+         Supported                          : Yes
+         Vendor                             : SEAGATE
+         Model                              : ST4000NM0023
+         Firmware                           : 0004
+         Serial number                      : Z1Z3EFGH
+         World-wide name                    : 5000C5007E654321
+         Total Size                         : 3815447 MB
+         Power State                        : Full rpm
+
+Command completed successfully.

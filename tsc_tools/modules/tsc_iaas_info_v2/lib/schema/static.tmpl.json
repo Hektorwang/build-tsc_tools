@@ -1,0 +1,65 @@
+{
+  "meta": {
+    "schema_version": 2,
+    "tool_version": null,
+    "generated_at": null,
+    "degraded": []
+  },
+  "machine_type": null,
+  "os_distribution": null,
+  "os_pkg_mgr": null,
+  "os_distribution_file_path": null,
+  "os_distribution_file_variety": null,
+  "os_kernel": null,
+  "machine_architecture": null,
+  "os_distribution_major_version": null,
+  "os_distribution_version": null,
+  "os_distribution_release": null,
+  "os_service_mgr": null,
+  "product_name": null,
+  "sn": null,
+  "manufacturer": null,
+  "cpu": {
+    "cpu_model": null,
+    "cpu_cnt": null
+  },
+  "memory": [
+    {
+      "size": null,
+      "locator": null,
+      "unit": null
+    }
+  ],
+  "storage": [
+    {
+      "dev": null,
+      "type": null,
+      "ctl_no": null,
+      "enc": null,
+      "slot": null,
+      "vd": null,
+      "state": null,
+      "state_norm": null,
+      "size": null,
+      "unit": null,
+      "size_gb": null,
+      "model": null,
+      "serial": null,
+      "wwn": null,
+      "interface": null
+    }
+  ],
+  "raid_controllers": [
+    {
+      "type": null,
+      "ctl_no": null,
+      "name": null,
+      "health": null,
+      "health_norm": null,
+      "vd_count": null,
+      "pd_count": null
+    }
+  ],
+  "contract_no": null,
+  "location": null
+}

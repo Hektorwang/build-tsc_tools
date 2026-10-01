@@ -1,0 +1,29 @@
+Controllers found: 1
+----------------------------------------------------------------------
+Controller information
+----------------------------------------------------------------------
+   Controller ID             : 0
+   Controller Model          : Adaptec 7805
+   Controller Serial Number  : 1A2B3C4D5E6F
+   Physical Slot             : 3
+   Temperature               : 55 C/ 131 F (Normal)
+   Status                    : Optimal
+
+----------------------------------------------------------------------
+Logical device information
+----------------------------------------------------------------------
+Logical Device number 0
+   Logical Device name       : LogicalDrv_0
+   RAID level                : 5
+   Status of Logical Device  : Optimal
+   Size                      : 2197265 MB
+   Stripe-unit size          : 256 KB
+   Read-cache setting        : Enabled
+   Write-cache setting       : Enabled (write-back)
+   Partitioned               : No
+   Protected by Hot-Spare    : No
+   Bootable                  : Yes
+   Failed stripes            : No
+   Power settings            : Disabled
+
+Command completed successfully.

@@ -1,0 +1,4 @@
+Module                  Size  Used by
+ahci                   45056  3
+libahci                40960  1 ahci
+libata                290816  2 ahci,libahci
