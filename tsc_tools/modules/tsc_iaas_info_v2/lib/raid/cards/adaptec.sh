@@ -65,7 +65,7 @@ _adaptec_parse_controller() {
         }
         function flushpd() {
             if (pddev != "") {
-                printf "PD%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n", S, pddev, S, pdenc, S, pdslot, S, pdstate, S, pdmodel, S, pdserial, S, pdwwn, S, pdsize, pdsize
+                printf "PD%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n", S, pddev, S, pdenc, S, pdslot, S, pdstate, S, pdmodel, S, pdserial, S, pdwwn, S, pdsize
                 pddev = ""; pdenc = ""; pdslot = ""; pdstate = ""; pdmodel = ""; pdserial = ""; pdwwn = ""; pdsize = ""
             }
         }

@@ -197,7 +197,7 @@ assert_json_has_key() {
     val="$(echo "${json}" | jq -r --arg k "${key}" '.[$k] // "NULL"' 2>/dev/null)"
     if [[ "${val}" == "NULL" ]]; then
         echo "  FAIL: ${message} (key '${key}' not found)"
-        return 1
+        exit 1
     fi
     return 0
 }
@@ -215,7 +215,7 @@ assert_json_no_key() {
     val="$(echo "${json}" | jq -r --arg k "${key}" '.[$k] // "NULL"' 2>/dev/null)"
     if [[ "${val}" != "NULL" ]]; then
         echo "  FAIL: ${message} (key '${key}' unexpectedly found: ${val})"
-        return 1
+        exit 1
     fi
     return 0
 }
@@ -232,7 +232,7 @@ assert_valid_json() {
         return 0
     else
         echo "  FAIL: ${message} (invalid JSON: ${json})"
-        return 1
+        exit 1
     fi
 }
 
