@@ -23,7 +23,7 @@ usage: tsc --tsc_sysinit --help
 
 ## 功能模块
 
-本工具集成了多个初始化配置模块, 你可以选择性地启用, 也可以使用 `--all` 选项一次性完成所有无需参数的配置.
+本工具集成了多个初始化配置模块, 你可以选择性地启用, 也可以使用 `--all` 选项一次性完成所有无需参数的配置(`--install_fhmv` 不包含在 `--all` 内, 需显式指定才安装).
 
 ### 1. SSH 配置优化
 
@@ -73,7 +73,7 @@ usage: tsc --tsc_sysinit --help
 
 关闭并禁用所有防火墙服务, 并清空所有防火墙规则, 以确保网络连接畅通.
 
-**操作**: 禁用 `firewalld`, `iptables`, `ufw` 和 `nftables` 服务, 并清除所有防火墙表链的规则.
+**操作**: 禁用 `firewalld`, `iptables`, `ufw` 和 `nftables` 服务, 并清除所有防火墙表链的规则. 清空后的规则会回写持久化配置文件, 原始规则不做备份(工作环境规范如此).
 
 ### 4. 系统时间管理
 
@@ -111,7 +111,7 @@ usage: tsc --tsc_sysinit --help
 
 - **SELinux**: `--config_selinux`, 默认永久禁用 SELinux.
 - **启动级别**: `--config_runlevel` 设置系统默认启动级别为 `multi-user.target`.
-- **工具安装**: `--install_fhmv`, 安装烽火回收站工具 `fh-data-recovery`
+- **工具安装**: `--install_fhmv`, 安装烽火回收站工具 `fh-data-recovery`. 不包含在 `--all` 内, 需显式指定; 受该 rpm `%post` 的版本判断所限, 仅支持 RHEL/CentOS 6/7 (x86_64), StarrySky (x86_64) 与 aarch64 环境.
 - **启动脚本**: **无控制开关**, 全量执行必选, 使能 `rc.local`.
 - **配置系统字符集**: **无控制开关**, 全量执行必选, 配置系统字符集为: `en_US.UTF-8`.
 - **日志配置**: `sar` **无控制开关**, 全量执行必选, 数据保存天数修改为 **28 天**.
@@ -136,7 +136,7 @@ tsc --tsc_sysinit --all --ntp_server=time.windows.com --sshd_port=12345 --no-dis
 | 选项/参数                   | 类型 | 描述                                                                |
 | :-------------------------- | :--- | :------------------------------------------------------------------ |
 | `--help`                    | 开关 | 显示帮助信息并退出.                                                 |
-| `--all`                     | 开关 | 启用所有功能模块.                                                   |
+| `--all`                     | 开关 | 启用所有功能模块(不含 `--install_fhmv`).                             |
 | `--check_env`               | 开关 | 检查运行环境(例如 `root` 权限和 `systemd`).                         |
 | `--config_selinux`          | 开关 | 永久禁用 SELinux.                                                   |
 | `--config_runlevel`         | 开关 | 设置系统默认启动级别为 `multi-user.target`.                         |
@@ -149,5 +149,5 @@ tsc --tsc_sysinit --all --ntp_server=time.windows.com --sshd_port=12345 --no-dis
 | `--ntp_server=<服务器>`     | 参数 | 配置向授时服务器进行时间同步(例如 `--ntp_server=time.windows.com`). |
 | `--config_user_env`         | 开关 | 配置终端环境(`bashrc` 和 `profile`).                                |
 | `--config_system_parameter` | 开关 | 调优系统内核, 进程和文件描述符参数.                                 |
-| `--install_fhmv`            | 开关 | 安装烽火回收站工具 `fh-data-recovery`.                              |
+| `--install_fhmv`            | 开关 | 安装烽火回收站工具 `fh-data-recovery`(不包含在 `--all` 内; 仅支持 RHEL/CentOS 6/7 x86_64, StarrySky x86_64, aarch64). |
 | `--no-选项名`               | 开关 | 排除指定的选项.                                                     |

@@ -42,13 +42,13 @@ tsc --模块名 模块选项 模块选项=选项参数
 
 # --tsc_sysinit: 模块名
 
-# --all: 模块定制选项, 执行该模块所有功能
+# --all: 模块定制选项, 执行该模块所有功能(--install_fhmv 不包含在内, 需显式指定)
 
-# --no-install_fhmv: 模块定制选项反义, 排除执行某个功能
+# --no-disable_firewall: 模块定制选项反义, 排除执行某个功能
 
 # --sshd_port=3204: 模块选项参数, 将sshd端口设置为3204
 
-tsc --tsc_sysinit --all --no-install_fhmv --sshd_port=3204
+tsc --tsc_sysinit --all --no-disable_firewall --sshd_port=3204
 
 # 查看帮助
 

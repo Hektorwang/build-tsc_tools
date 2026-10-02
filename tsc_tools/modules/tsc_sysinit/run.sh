@@ -224,7 +224,7 @@ config_selinux() {
     local SELinuxConfig=/etc/selinux/config
     if [[ -s "${SELinuxConfig}" ]]; then
         setenforce 0 &>/dev/null || true
-        sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" "${SELinuxConfig}"
+        sed -i "s/^SELINUX=.*/SELINUX=disabled/" "${SELinuxConfig}"
         LOGINFO "${FUNCNAME[0]}": Configuration takes effect on next boot.
         LOGSUCCESS "${FUNCNAME[0]}"
     else
@@ -610,7 +610,7 @@ ntp_server() {
         elif systemctl is-active --quiet "cron.service" &>/dev/null; then
             systemctl restart cron &>/dev/null
         else
-            LOGWARN "Failed to find and restart cron service. Cron job may not be active until next boot."
+            LOGWARNING "Failed to find and restart cron service. Cron job may not be active until next boot."
         fi
     else
         LOGERROR "ntpdate ${_arg_ntp_server} failed"
@@ -650,13 +650,12 @@ config_chrony() {
     local backup_file="${chrony_conf}.bak_${time14}"
     LOGDEBUG "$(\cp -v "${chrony_conf}" "${backup_file}" 2>&1)"
     LOGINFO "Updating ${chrony_conf} with server ${_arg_ntp_server}"
-    sed -i "
+    sed -i -e '
         /^[[:space:]]*#/b
         /^[[:space:]]*server[[:space:]]/s/^/# /
         /^[[:space:]]*pool[[:space:]]/s/^/# /
-        \$a\\
-        server ${_arg_ntp_server} iburst
-    " "${chrony_conf}"
+    ' -e "\$a\\
+server ${_arg_ntp_server} iburst" "${chrony_conf}"
 
     local service_name="chronyd"
     if systemctl list-unit-files --type=service --no-pager --no-legend |
@@ -739,6 +738,8 @@ install_fhmv() {
         LOGINFO "${FUNCNAME[0]}: fh-data-recovery-${installed_ver} already installed, skip."
     fi
     if rm -v &>/dev/null; then
+        # 探针: fhmv 安装后以自身包装器替换系统 rm(对 -v 无操作数返回 0),
+        # GNU rm 同样调用返回 1, 以此验证包装器已就位
         LOGSUCCESS "${FUNCNAME[0]}"
     else
         LOGERROR "${FUNCNAME[0]}"
@@ -778,7 +779,10 @@ if [ "${_arg_all}" == "on" ]; then
     all_mode config_lang && config_lang
     all_mode config_sar && config_sar
     all_mode config_rc_local && config_rc_local
-    all_mode install_fhmv && install_fhmv
+    # --install_fhmv 不纳入 all_mode: 仅在显式指定 --install_fhmv 时安装(--all 不隐含)
+    if [[ "${_arg_install_fhmv}" == "on" ]]; then
+        install_fhmv
+    fi
     if [[ -n "${_arg_ntp_server}" ]]; then
         ntp_server
     fi

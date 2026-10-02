@@ -1,5 +1,17 @@
 # release-note
 
+## Version=2.1.4
+
+1. fix(tsc_sysinit): `run.m4` 重新对齐 `run.sh` 并经 argbash 2.11.0 再生成校验一致——m4 补入 `--no-` 排除机制(`all_mode`)与硬化版 `install_fhmv`(找不到 rpm 前置校验 + 同版本跳过)、"Reloading" 日志文案, 恢复 m4 为生成源
+2. change(tsc_sysinit): `--install_fhmv` 不再包含在 `--all` 内, 仅显式指定时安装(与 `--all` 同用亦生效); README/readme 同步说明, `--no-install_fhmv` 用法示例随之失效并更替
+3. docs(tsc_sysinit): readme 注明 `--install_fhmv` 的 OS 支持范围——该 rpm `%post` 仅支持 RHEL/CentOS 6/7 (x86_64), StarrySky (x86_64) 与 aarch64; RHEL8/9 x86 上显式安装会失败并残留对 `/etc/profile`、`/etc/crontab` 的修改
+4. fix(tsc_sysinit): `ntp_server` 中未定义的 `LOGWARN` 更正为 `LOGWARNING`——crond/cron 均不活跃时原会 command not found, 在 errexit 下中断脚本
+5. fix(tsc_sysinit): `config_selinux` 改为整行替换 `^SELINUX=`, `permissive` 状态同样能永久禁用(原只匹配 `enforcing`); 注释行与 `SELINUXTYPE` 不受影响(fixture 已验证)
+6. fix(tsc_sysinit): `config_chrony`(placeholder) 修复 sed 追加 server 行携带前导空格的问题
+7. docs(tsc_sysinit): readme 注明 `--disable_firewall` 不保留原始防火墙规则备份(工作环境规范如此)
+8. docs(tsc_sysinit): `install_fhmv` 的 `rm -v` 探针补充意图注释(fhmv 安装后以包装器替换系统 rm, 对无操作数 `-v` 返回 0, GNU rm 返回 1, 以此验证包装器就位)
+9. TODO(tsc_sysinit): 引入 [argc](https://github.com/sigoden/argc) 替代 argbash——参数定义改为 run.sh 内注释声明(`# @flag`/`# @option`), 解析/帮助/校验由其单二进制完成, 删除 `run.m4` 与生成块; release 资产含 x86_64/aarch64 musl 静态二进制, 与本工具支持架构一致. 落地顺序: 先 spike(两架构二进制入 packages/ 并验证静态链接, 以 tsc_sysinit 为样例实测 `--all --no-disable_firewall` 路径), 后全量切换. 注意 argc 无内建 `--no-` 反义, 各排除项需显式声明 `# @flag --no-<功能名>`
+
 ## Version=2.1.3
 
 1. fix(tsc_iaas_info_v2): memory 采集器未知单位不再静默跳过, 记入降级(`memory.unit_<单位>`)
