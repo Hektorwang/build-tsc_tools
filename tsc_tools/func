@@ -27,38 +27,40 @@ __log() {
     line="${BASH_LINENO[1]:-0}"
     message="$*"
 
-    color_end='\033[0m'
+    color_end=$'\033[0m'
     case "$level" in
     DEBUG)
-        color_start='\033[1;37m'
+        color_start=$'\033[1;37m'
         out_fd=2
         ;;
     INFO)
-        color_start='\033[0;39m'
+        color_start=$'\033[0;39m'
         out_fd=1
         ;;
     SUCCESS)
-        color_start='\033[1;32m'
+        color_start=$'\033[1;32m'
         out_fd=1
         ;;
     WARNING)
-        color_start='\033[1;33m'
+        color_start=$'\033[1;33m'
         out_fd=2
         ;;
     ERROR)
-        color_start='\033[1;31m'
+        color_start=$'\033[1;31m'
         out_fd=2
         ;;
     *)
-        color_start='\033[0;39m'
+        color_start=$'\033[0;39m'
         out_fd=1
         ;;
     esac
 
-    # 输出彩色到终端，同时写入纯文本日志
-    printf "${color_start}%-23s | %-8s | %s:%s - %s${color_end}\n" \
-        "${timestamp}" "${level}" "${script_name}" "${line}" "${message}" |
-        tee -a "${log_file:-/dev/null}" >&"${out_fd}"
+    # 彩色输出到终端, 纯文本追加写入日志 (两路各自输出, 日志文件不含转义符)
+    local plain
+    plain="$(printf '%-23s | %-8s | %s:%s - %s\n' \
+        "${timestamp}" "${level}" "${script_name}" "${line}" "${message}")"
+    printf '%s' "${plain}" >>"${log_file:-/dev/null}"
+    printf '%s%s%s' "${color_start}" "${plain}" "${color_end}" >&"${out_fd}"
 
     return 0
 }
@@ -696,7 +698,8 @@ backup_dir_with_rotation() {
         LOGERROR "Backup: '${target_dir}' -> '${new_backup}'"
         return 2
     fi
-    local timestamp_pattern='[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+    # %Y%m%d%H%M%S = 14 位, pattern 必须同为 14 位, 否则 find 永远匹配不到旧备份, 轮换清理失效
+    local timestamp_pattern='[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
     # mapfile -d '' old_backups < <(
     #     find "${backup_root}" -maxdepth 1 -type d \
     #         -name "${base}.bak.${timestamp_pattern}" \
