@@ -1,5 +1,9 @@
 # release-note
 
+## Version=2.1.5
+
+1. fix(func): `__log` 恢复行尾换行——2.1.4 分离终端彩色与日志纯文本两路时, 格式化结果经 `$(printf ...)` 命令替换赋值, 行尾 `\n` 被命令替换剥掉, 两路 `printf '%s'` 均无换行, 终端输出与日志文件里所有日志行连成一片; 改用 `printf -v` 直接赋值保留换行(install.sh 与各模块均 source 公共 func, 一处修复全覆盖)
+
 ## Version=2.1.4
 
 1. fix(tsc_sysinit): `run.m4` 重新对齐 `run.sh` 并经 argbash 2.11.0 再生成校验一致——m4 补入 `--no-` 排除机制(`all_mode`)与硬化版 `install_fhmv`(找不到 rpm 前置校验 + 同版本跳过)、"Reloading" 日志文案, 恢复 m4 为生成源

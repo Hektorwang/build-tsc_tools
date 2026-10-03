@@ -56,9 +56,10 @@ __log() {
     esac
 
     # 彩色输出到终端, 纯文本追加写入日志 (两路各自输出, 日志文件不含转义符)
+    # printf -v 直接赋值: $() 命令替换会剥掉行尾换行, 不能用它接带 \n 的格式化结果
     local plain
-    plain="$(printf '%-23s | %-8s | %s:%s - %s\n' \
-        "${timestamp}" "${level}" "${script_name}" "${line}" "${message}")"
+    printf -v plain '%-23s | %-8s | %s:%s - %s\n' \
+        "${timestamp}" "${level}" "${script_name}" "${line}" "${message}"
     printf '%s' "${plain}" >>"${log_file:-/dev/null}"
     printf '%s%s%s' "${color_start}" "${plain}" "${color_end}" >&"${out_fd}"
 
