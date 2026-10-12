@@ -15,17 +15,20 @@ packaging/rpm/
   nfpm.yaml.tmpl                    nfpm 包定义模板(占位符 @VERSION@ @RELEASE@ @STAGE_DIR@)
   preinstall.sh.tmpl                %pre 模板, 内含 `# >>> INJECT <file>` 注入标记
   postinstall.sh                    %post  (部署二进制 + 写部署清单 + 注入 profile)
-  preremove.sh                      %preun (回收 + 还原 vimrc)
+  preremove.sh                      %preun (按 hash 清单回收 + 还原 vimrc)
+  postremove.sh                     %postun (清理残留空目录壳, 升级跳过)
   env_check.sh                      环境检测与准入校验(单一事实源, %pre 内联 + 随包发布双用)
   lib_min.sh                        最小日志库(只供 %pre 内联, 不随包发布)
 .supported_env.conf                 支持矩阵(架构白名单 / 发行版家族 + 主版本)
 release-note.md                     版本号来源(文件内第一个 `Version=`)
 tsc_tools/                          包内容(payload 源)
   func                              运行期公共库(LOG* 等)
-  tsc_profile                       PATH / TSC_TOOLS 块 / tsc_profile.d 加载
+  tsc_profile                       公共空入口(仅 source tsc_profile.d/*.sh, 卸载不删)
+  profile                           本包 drop-in(部署到 0-tsc_tools-profile, 含 PATH / TSC_MODULES_DIR)
   lib/env_check.sh                  env_check.sh 的随包副本(构建时放入)
   packages/install.sh               安装期部署逻辑, 由 %post 调用
   packages/<tool>/<tool>-<arch>     自带二进制, <arch> ∈ {x86_64, aarch64, noarch}
+  gen_rag.sh                         多工具 rag 生成器(构建期由 build.sh 调, 亦随包发布供目标机运行)
 ```
 
 ---
@@ -40,24 +43,25 @@ tsc_tools/                          包内容(payload 源)
 | 4 | 把 `README.md` / `release-note.md` / `.supported_env.conf` 拷进 `tsc_tools/`(见 §4.8) |
 | 5 | 复制 `tsc_tools/` → `stage/tsc_tools/`, 并把 `packaging/rpm/env_check.sh` 放到 `stage/tsc_tools/lib/` |
 | 6 | `stage` 内所有 `*.sh` 统一 `chmod +x` 并 `dos2unix` |
-| 7 | 渲染 `%pre`(`render_template` 把 `# >>> INJECT <file>` 换为该文件内容), 复制 `%post` / `%preun` |
-| 8 | 对三个 scriptlet 逐个 `bash -n` 语法自检 |
+| 7 | 渲染 `%pre`(`render_template` 把 `# >>> INJECT <file>` 换为该文件内容), 复制 `%post` / `%preun` / `%postun` |
+| 8 | 对四个 scriptlet 逐个 `bash -n` 语法自检 |
 | 9 | 用 `sed` 渲染 `nfpm.yaml` 模板 |
 | 10 | `nfpm package --packager rpm` |
-| 11 | 产物自检: 包信息 / `Requires` / 文件数 / **两架构自带二进制是否齐全** / `tsc` 可执行位 / 三段 scriptlet 是否写入 |
+| 11 | 产物自检: 包信息 / `Requires` / 文件数 / **两架构自带二进制是否齐全** / `tsc` 可执行位 / 四段 scriptlet 是否写入 |
 | 12 | 清理 `stage/`, 打印 `Size` 与 `SHA256` |
 
 产物: `release/tsc_tools-<version>-<release>.noarch.rpm`(`release` 取构建日期 `YYYYMMDD`)。
 
 ---
 
-## 3. 三段 scriptlet 语义(改之前必须知道)
+## 3. 四段 scriptlet 语义(改之前必须知道)
 
 | 段 | 文件 | 执行时机 | `$1` |
 |---|---|---|---|
 | `%pre` | `preinstall.sh.tmpl` | 包文件落盘**之前** | 安装 `1` / 升级 `2+`(本脚本不使用) |
 | `%post` | `postinstall.sh` | 包文件落盘**之后** | 安装 `1` / 升级 `2+`(两者步骤相同且幂等) |
 | `%preun` | `preremove.sh` | 卸载**之前** | `0` = 真卸载(执行回收) / `>=1` = 升级(直接跳过) |
+| `%postun` | `postremove.sh` | 卸载**之后**(RPM 删完包文件后) | `0` = 真卸载(清理空目录壳) / `>=1` = 升级(跳过) |
 
 四个必须理解的设计:
 
@@ -65,6 +69,7 @@ tsc_tools/                          包内容(payload 源)
 2. **`lib_min.sh` 是 `func` 的 shim**。它只提供 5 个 `LOG*` 与 `is_element_in_array`, 与 `func` 里的同名函数**同名同签名**——`env_check.sh` 因此能在 `%pre`(用 `lib_min.sh`)与 `%post`(用 `func`)两处不改一行地复用。改任一侧的签名或行为, 必须同步另一侧。
 3. **`%preun` 在升级时全部跳过**。回收工作交给新包的 `%post` 重建, 避免出现"升级过程中工具被删空"的窗口。
 4. **`%preun` 只用 POSIX 语法, 且任何分支都 `exit 0`**。`%preun` 返回非零会让 rpm 拒绝卸载, 让机器卡在"卸不掉"的状态比留下几个文件更糟。
+5. **`%postun` 只做目录壳清理**。RPM 删完包文件后, 用 `find <TSC_TOOLS_DIR> -type d -empty -delete` 清掉空目录壳; 升级(`$1>=1`)跳过(新包目录已重建)。`%postun` 也永远 `exit 0`。
 
 ---
 
@@ -74,7 +79,7 @@ tsc_tools/                          包内容(payload 源)
 
 - 目录名 = 工具名, 文件名为 `<tool>-<arch>` 或 `<tool>-noarch`(两种命名混用时 `-<arch>` 优先)。
 - 普通工具: 登记到 `tsc_tools/packages/install.sh` 的 `SUPPORTED_BINARY_TOOLS`(值为版本探测参数, 如 `-V`), 部署到 `/bin` 的判定依赖它。
-- RAID CLI(`sas3ircu`/`storcli64`/`arcconf`)**不走**该数组, 由 `_install_raid_cli` 按探测结果部署; 清单记录则由 `%post` 的 `record_manifest` 统一扫描 `packages/*/` 完成。
+- RAID CLI(`sas3ircu`/`storcli64`/`arcconf`)**不走**该数组, 由 `_install_raid_cli` 按探测结果部署; 清单记录由 `%post` 的 `record_manifest` 按"内容与本包自带二进制一致"补录(此前漏记, 已修正)。
 - 删除工具后注意 `build.sh` 的"两架构齐全"断言(§4.2)与 `%preun` 的回收清单。
 
 ### 4.2 架构
@@ -100,17 +105,17 @@ tsc_tools/                          包内容(payload 源)
 
 | 行格式 | 写入方 | 含义 |
 |---|---|---|
-| `FILE:<path>` | `%post` 的 `record_manifest` | 常规文件且指纹与本包自带二进制一致, 卸载时可删 |
+| `FILE:<path>:<sha256>` | `%post` 的 `record_manifest` | 包外衍生文件(`/bin/*`、RAID CLI、drop-in、vimrc 等), 卸载时按 sha256 校验一致才删 |
 | `LINK:<path>` | `%post` 的 `record_manifest` | 本包创建的别名软链(目前仅 `/bin/storcli`) |
 | `VIMRC_BACKUP:<path>` | `packages/install.sh` | 安装时备份的原始 `/root/.vimrc`, 卸载时还原 |
 
 `%preun` 按此清单回收并还原。**改任一侧必须同步这个格式**, 否则卸载会漏回收或误删。
 
-`record_manifest` 只记录"常规文件 + 指纹一致"的条目: 系统自带同名文件/软链一律不记(`install.sh` 的 `\cp` 会穿透软链改写其目标, 若把软链记成 `LINK`, 卸载时会误删系统软链)。
+`record_manifest` 只记录"常规文件 + 内容与本包自带二进制一致"的条目(并写其 sha256): 系统自带同名文件/软链一律不记(`install.sh` 的 `\cp` 会穿透软链改写其目标, 若把软链记成 `LINK`, 卸载时会误删系统软链)。`%preun` 回收时按 hash 校验, 不一致(用户/系统改过)则跳过保留。
 
 ### 4.6 文件权限
 
-`build.sh` 只对 `*.sh` 做 `chmod +x`; `tsc`、`func`、`tsc_profile`、`vimrc` 及各类配置的最终权限 = **源文件 mode & 打包机 umask**。产物自检只断言 `/home/tsc/tsc_tools/tsc` 一个文件可执行。
+`build.sh` 只对 `*.sh` 做 `chmod +x`; `tsc`、`func`、`tsc_profile`、`profile`、`vimrc` 及各类配置的最终权限 = **源文件 mode & 打包机 umask**。产物自检只断言 `/home/tsc/tsc_tools/tsc` 一个文件可执行。
 
 > 打包机 umask 收紧(如 `0077`)会削掉其余文件权限且不报错。脚本内**未**固定 umask, 需要确定性时可在 `build.sh` 开头加 `umask 022`。
 
@@ -142,7 +147,7 @@ bash -n build.sh
 # 核对产物
 rpm -qp --qf '%{NAME} %{VERSION}-%{RELEASE} %{ARCH}\n' release/*.rpm
 rpm -qp --requires release/*.rpm
-rpm -qp --scripts  release/*.rpm          # 看三段 scriptlet 是否齐全
+rpm -qp --scripts  release/*.rpm          # 看四段 scriptlet 是否齐全
 rpm -qlpv          release/*.rpm | head   # 文件与权限
 
 # 手工跑 %pre(不改本机, 抽取后直接执行)

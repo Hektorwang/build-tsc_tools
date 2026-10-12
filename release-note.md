@@ -1,5 +1,14 @@
 # release-note
 
+## Version=2.1.7
+
+1. refactor(rpm): `/home/tsc/tsc_profile` 拆为公共空入口(仅 `source tsc_profile.d/*.sh`), 本包配置移到 drop-in `tsc_tools/profile`(`%post` 部署到 `/home/tsc/tsc_profile.d/0-tsc_tools-profile`, 含 PATH 与 `TSC_MODULES_DIR` 追加声明); 卸载只删本包 drop-in, 保留空入口与 `tsc_profile.d/` 目录, 为 `tsc_python` 等后续工具提供 drop-in 扩展点
+2. feat(tsc): 模块目录抽成 `TSC_MODULES_DIR` 变量(冒号分隔多目录), `tsc` 与 `gen_rag.sh` 按 `:` 顺序遍历; 用户须 `source /home/tsc/tsc_profile` 后方可使用 `tsc`, 未 source 直接调用会报错提示; `tsc_python` 等后续工具只需往 `tsc_profile.d/` 放一个 `1-tsc_python-profile` 即可让自身 modules 被 `tsc`/`gen_rag` 自动纳入
+3. refactor(rpm): 卸载回收改三分类——包内文件仍交 RPM 文件清单; 包外衍生文件(`/bin/*`、RAID CLI、`/root/.vimrc`、drop-in)进 `.installed_manifest` 并带 sha256(`FILE:<path>:<sha256>` 格式), `%preun` 按 hash 校验一致才删(防误删被用户/系统改过的同名文件); 目录壳由新增 `%postun` `find -empty -delete` 清理(升级 `$1>=1` 跳过)
+4. fix(rpm): `record_manifest` 补全此前漏记的 RAID CLI(`sas3ircu`/`storcli64`/`arcconf`)与 `/root/.vimrc`, 统一 hash 字段; 系统自带同名文件不覆盖、不记、不卸的判断不变
+5. feat(rpm): `gen_rag.sh` 打进包内 `/home/tsc/tsc_tools/gen_rag.sh`, 目标机 `source tsc_profile` 后可直接运行生成多工具合并 rag; 构建期仍由 `build.sh` 调用生成 `tsc_tools/rag.md`
+6. fix(rpm): 新增 `%postun` scriptlet(`postremove.sh`), `nfpm.yaml` 挂接; 产物自检扩展为四段 scriptlet 完整性校验
+
 ## Version=2.1.6
 
 1. refactor(build): 制成品由 makeself 自解压包改为 RPM, 产出 `release/tsc_tools-<version>-<release>.noarch.rpm`(`version` 取自本文件 `Version=`, `release` 为构建日期); 删除 `makeself.sh`/`makeself-header.sh`/`lib/makeself-2.5.0.run` 与自解压入口 `install.sh`, 打包脚本集中到 `packaging/rpm/`

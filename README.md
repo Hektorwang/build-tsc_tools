@@ -58,14 +58,17 @@ rpm -e tsc_tools
 
 卸载时回收:
 
-- `/bin` 下由本包部署的二进制与别名软链(逐文件内容指纹校验, 不一致则跳过, 不误删系统同名命令)
-- `/home/tsc/tsc_tools/bin`
-- `/root/.vimrc`(仍与本包版本一致才删, 用户改过则保留)
-- `/home/tsc/tsc_profile` 中的 `TSC_TOOLS` 块(保留用户自定义内容, 摘除后文件为空则一并删除)
+- `/bin` 下由本包部署的二进制与别名软链(逐文件 sha256 校验, 与本包自带一致才删, 不误删系统同名命令或被用户改过的文件); RAID CLI(`sas3ircu`/`storcli64`/`arcconf`)同理
+- `/home/tsc/tsc_tools/bin` 与 `.installed_manifest`
+- `/root/.vimrc`(仍与本包版本一致才删, 用户改过则保留)及安装时备份的 `/root/.vimrc.tsc_tools.bak`
+- 本包 drop-in `/home/tsc/tsc_profile.d/0-tsc_tools-profile`
+- 包内文件由 RPM 文件清单自动删除; 残留空目录壳由 `%postun` `find -empty -delete` 清理(升级时跳过)
 
-卸载时保留: `/var/log/tsc` 及运行期日志、`/home/tsc/tsc_profile.d` 下的自定义片段。
+卸载时保留: `/home/tsc/tsc_profile`(公共空入口)、`/home/tsc/tsc_profile.d/` 目录(其他工具的 drop-in)、`/var/log/tsc` 及运行期日志。
 
 ## 用法
+
+先用 `root` `source` 一次 `/home/tsc/tsc_profile`(初始化 PATH 与 `TSC_MODULES_DIR`, 仅当前会话生效; 想持久化可写入 `/root/.bashrc`); 之后方可使用 `tsc`:
 
 ```bash
 tsc --模块名 模块选项 模块选项=选项参数
