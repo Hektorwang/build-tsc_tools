@@ -8,6 +8,7 @@
 4. fix(rpm): `record_manifest` 补全此前漏记的 RAID CLI(`sas3ircu`/`storcli64`/`arcconf`)与 `/root/.vimrc`, 统一 hash 字段; 系统自带同名文件不覆盖、不记、不卸的判断不变
 5. feat(rpm): `gen_rag.sh` 打进包内 `/home/tsc/tsc_tools/gen_rag.sh`, 目标机 `source tsc_profile` 后可直接运行生成多工具合并 rag; 构建期仍由 `build.sh` 调用生成 `tsc_tools/rag.md`
 6. fix(rpm): 新增 `%postun` scriptlet(`postremove.sh`), `nfpm.yaml` 挂接; 产物自检扩展为四段 scriptlet 完整性校验
+7. refactor: 模块目录 `tsc_collectSar` 重命名为 `tsc_collect_sar`(snake_case, 与其它模块命名一致); `tsc`/`gen_rag.sh` 按目录名自动纳入, 对外用法由 `--tsc_collectSar` 改为 `--tsc_collect_sar`; 运行期数据目录 `/var/log/tsc/CollectSar` 属另一概念, 保持不变
 
 ## Version=2.1.6
 

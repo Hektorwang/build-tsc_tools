@@ -13,7 +13,7 @@ description: |
 
 # 硬依赖: RHEL/Euler 基础件 + 硬件检查必需件
 #   pciutils  (lspci)   — RAID 卡/控制器探测 (硬件检查核心路径, 缺失则退化为 lsmod, RAID 信息不全)
-#   sysstat   (sar)     — tsc_collectSar 与 tsc_sysinit 的 HISTORY 配置
+#   sysstat   (sar)     — tsc_collect_sar 与 tsc_sysinit 的 HISTORY 配置
 #   dmidecode           — 序列号/内存条/厂商采集, 缺失则相关字段为空或 Unknown
 # 三者缺失会让硬件检查结论不完整, 故按硬依赖声明: 装不上时应显式暴露缺失,
 # 而不是装上一个"采不全"的工具。特殊场景可用 rpm -ivh --nodeps 绕过

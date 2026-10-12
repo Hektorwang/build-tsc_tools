@@ -29,7 +29,7 @@
   释放系统内存缓存  
   通过 `echo 3 > /proc/sys/vm/drop_caches` 手动释放内存缓存, 以缓解系统压力. 效果取决于系统可释放的缓存.  
   tsc --tsc_drop_cache [释放阈值] # 可选参数, 释放阈值(int), 默认内存使用率超过 80% 时释放  
-- tsc_collectSar  
+- tsc_collect_sar  
   系统资源使用情况对比工具  
   对比给定的两个时间点的系统资源使用情况  
 

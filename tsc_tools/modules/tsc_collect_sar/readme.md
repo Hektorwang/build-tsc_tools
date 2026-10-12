@@ -11,10 +11,10 @@ keywords:
   - 历史数据
   - 测试前后对比
 description: 对比给定的两个时间点的系统资源使用情况
-usage: tsc --tsc_collectSar [install|compare|uninstall] [参数]
+usage: tsc --tsc_collect_sar [install|compare|uninstall] [参数]
 ---
 
-# tsc_collectSar
+# tsc_collect_sar
 
 功能说明
 
@@ -30,14 +30,14 @@ usage: tsc --tsc_collectSar [install|compare|uninstall] [参数]
 
    ```bash
    source /home/tsc/tsc_profile
-   tsc --tsc_collectSar install
+   tsc --tsc_collect_sar install
    ```
 
 2. 执行对比脚本
 
    ```bash
    source /home/tsc/tsc_profile
-   tsc --tsc_collectSar compare 20210910 20210914 172.16.40.43
+   tsc --tsc_collect_sar compare 20210910 20210914 172.16.40.43
    # 20210910 为测试前日期，20210914 为测试后日期，172.16.40.43 为本机 ip 地址
    ```
 
@@ -48,5 +48,5 @@ usage: tsc --tsc_collectSar [install|compare|uninstall] [参数]
 
    ```bash
    source /home/tsc/tsc_profile
-   tsc --tsc_collectSar uninstall
+   tsc --tsc_collect_sar uninstall
    ```
