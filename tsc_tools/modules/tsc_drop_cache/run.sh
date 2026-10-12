@@ -14,6 +14,12 @@ WORK_DIR="$(dirname "$(readlink -f "$0")")"
 # (LOG* 有而 __log 无), 跳过 source 会在首次打日志时报 __log: command not found
 source "${WORK_DIR}/../../func"
 
+# 阈值必须为整数, 否则下面 [ -gt ] 会报 "integer expression expected" 并非零退出
+if ! [[ "${MEM_USED_THRESHOLD}" =~ ^[0-9]+$ ]]; then
+    LOGERROR "释放阈值必须为整数(0-100), 当前为 '${MEM_USED_THRESHOLD}'"
+    exit 1
+fi
+
 get_mem() {
     mem_total="$(free -m | awk '/^Mem:/{print $2}')"
     mem_used="$(free -m | awk '/^Mem:/{print $3}')"

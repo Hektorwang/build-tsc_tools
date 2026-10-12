@@ -37,7 +37,7 @@ fi
 
 /bin/rm -rf /tmp/CollectSar 2>/dev/null
 
-\mv /home/fox/CollectSar /tmp/CollectSar
+\mv /var/log/tsc/CollectSar /tmp/CollectSar
 if command -v systemctl &>/dev/null; then
 	systemctl daemon-reload
 	systemctl restart crond

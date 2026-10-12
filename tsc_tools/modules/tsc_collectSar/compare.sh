@@ -5,12 +5,12 @@
 #       本脚本不改变取列语义, 仅规范错误返回码/输入校验/引用与接口探测方式。
 
 if [ $# -lt 3 ]; then
-	echo "Usage:   ./CollectSar.bin compare date1 date2 localIp"
-	echo "Example: ./CollectSar.bin compare 20210910 20210914 172.16.40.43"
+	echo "Usage:   ./run.sh compare date1 date2 localIp"
+	echo "Example: ./run.sh compare 20210910 20210914 172.16.40.43"
 	exit 1
 fi
 
-REPORT_DIR="/home/fox/CollectSar"
+REPORT_DIR="/var/log/tsc/CollectSar"
 date1="$1"
 date2="$2"
 ipaddr="$3"

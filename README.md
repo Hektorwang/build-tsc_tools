@@ -28,7 +28,7 @@
 - tsc_drop_cache  
   释放系统内存缓存  
   通过 `echo 3 > /proc/sys/vm/drop_caches` 手动释放内存缓存, 以缓解系统压力. 效果取决于系统可释放的缓存.  
-  --drop_cache [释放阈值] # 可选参数, 释放阈值(int), 默认内存使用率超过 80% 时释放  
+  tsc --tsc_drop_cache [释放阈值] # 可选参数, 释放阈值(int), 默认内存使用率超过 80% 时释放  
 - tsc_collectSar  
   系统资源使用情况对比工具  
   对比给定的两个时间点的系统资源使用情况  
@@ -61,7 +61,7 @@ rpm -e tsc_tools
 - `/bin` 下由本包部署的二进制与别名软链(逐文件 sha256 校验, 与本包自带一致才删, 不误删系统同名命令或被用户改过的文件); RAID CLI(`sas3ircu`/`storcli64`/`arcconf`)同理
 - `/home/tsc/tsc_tools/bin` 与 `.installed_manifest`
 - `/root/.vimrc`(仍与本包版本一致才删, 用户改过则保留)及安装时备份的 `/root/.vimrc.tsc_tools.bak`
-- 本包 drop-in `/home/tsc/tsc_profile.d/0-tsc_tools-profile.sh`
+- 本包 drop-in `/home/tsc/tsc_profile.d/01-tsc_tools-profile.sh`
 - 包内文件由 RPM 文件清单自动删除; 残留空目录壳由 `%postun` `find -empty -delete` 清理(升级时跳过)
 
 卸载时保留: `/home/tsc/tsc_profile`(公共空入口)、`/home/tsc/tsc_profile.d/` 目录(其他工具的 drop-in)、`/var/log/tsc` 及运行期日志。

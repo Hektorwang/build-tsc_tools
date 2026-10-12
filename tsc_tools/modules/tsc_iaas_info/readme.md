@@ -58,8 +58,6 @@ tests/
 ├── test_framework.sh          # 测试框架：mock 机制 + 断言函数
 ├── test_raid_detector.sh      # RAID 类型检测测试
 ├── test_direct_disk.sh        # 直通盘判断逻辑测试
-├── test_raid_health.sh        # RAID 健康检查解析测试
-├── test_alert.sh              # 告警生成逻辑测试
 └── fixtures/                  # 模拟输入文件目录
     ├── lspci/                 # 模拟 lspci 输出
     │   ├── lsi_megraid.txt    # LSI/MegaRAID 场景

@@ -255,7 +255,8 @@ export -f version_gt version_lt version_eq version_ge version_le
 #   "$@" (脚本级别位置变量 $@)
 ##################################################
 debug() {
-    if [[ "$(eval echo "\${$#}")" != "debug" ]]; then
+    # 取最后一个位置参数判断是否为 debug: ${!#} 间接展开, 避免 eval 把参数值当代码执行
+    if [[ "${!#}" != "debug" ]]; then
         DEBUG=false
         return 0
     fi

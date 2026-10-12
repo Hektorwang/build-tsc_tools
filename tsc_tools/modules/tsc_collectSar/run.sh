@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# cd /opt/tsc/packet/CollectSar
 WORK_DIR="$(dirname "$(readlink -f "$0")")" && cd "${WORK_DIR}" || exit 99
 
 case "$1" in

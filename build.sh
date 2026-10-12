@@ -20,6 +20,9 @@ set -o nounset
 set -o pipefail
 set +o posix
 shopt -s nullglob
+# 固定 umask: 产物文件权限 = 源文件 mode & umask, 收紧的构建机 umask(如 0077)
+# 会静默削掉权限, 这里统一保证常规权限可预期
+umask 022
 
 PROJECT_DIR="$(dirname "$(readlink -f "$0")")" && cd "${PROJECT_DIR}" || exit 99
 
@@ -118,12 +121,29 @@ mkdir -p "${STAGE_DIR}/rpm-scripts" "${STAGE_DIR}/tsc_tools/lib"
 
 find "${STAGE_DIR}"/tsc_tools -type f -name "*.sh" -exec chmod +x {} \;
 find "${STAGE_DIR}"/tsc_tools -type f -name "*.sh" -exec dos2unix {} \;
+# 无扩展名脚本(tsc/func/profile/tsc_profile)不在上面的 *.sh 通配内, 单独规范换行;
+# tsc 需可执行位(模块调度入口, 产物自检也会断言)
+for _f in tsc func profile tsc_profile; do
+    [[ -f "${STAGE_DIR}/tsc_tools/${_f}" ]] || continue
+    dos2unix "${STAGE_DIR}/tsc_tools/${_f}"
+done
+unset _f
+chmod +x "${STAGE_DIR}/tsc_tools/tsc"
 
 ##################################################
 # 生成 RPM scriptlet
 ##################################################
 render_template "${PACKAGING_DIR}/preinstall.sh.tmpl" "${STAGE_DIR}/rpm-scripts/preinstall"
-\cp "${PACKAGING_DIR}"/postinstall.sh "${STAGE_DIR}"/rpm-scripts/postinstall
+# 注入断言: render_template 对被注入文件缺失是静默输出空, 会导致目标机安装期
+# 才以 unbound 变量报错(%pre 在 set -u 下), 这里在打包期硬校验关键串
+for _needle in 'SUPPORTED_ARCHITECTURES=' 'is_element_in_array' 'check_env'; do
+    if ! grep -q -- "${_needle}" "${STAGE_DIR}/rpm-scripts/preinstall"; then
+        echo "ERROR: %pre 缺少注入内容标记 '${_needle}', 注入源文件可能缺失。" >&2
+        exit 1
+    fi
+done
+unset _needle
+\cp "${PACKAGING_DIR}"/postinstall.sh "${STAGE_DIR}/rpm-scripts/postinstall"
 \cp "${PACKAGING_DIR}"/preremove.sh "${STAGE_DIR}"/rpm-scripts/preremove
 \cp "${PACKAGING_DIR}"/postremove.sh "${STAGE_DIR}"/rpm-scripts/postremove
 chmod 0755 "${STAGE_DIR}"/rpm-scripts/*

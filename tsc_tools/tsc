@@ -15,6 +15,7 @@ source "${WORK_DIR}/func"
 
 declare -gA registered_modules_map=()
 declare -gA module_arg_indices=()
+declare -ga module_order=()
 declare -g all_args=()
 
 # 在 TSC_MODULES_DIR 的多个目录里查找某个 module 的实际目录
@@ -64,7 +65,9 @@ function parse_arguments_by_module() {
     local args=("$@")
     local i=0
     local current_module=""
-    local i_start=0
+    # a_start: 当前模块的参数在 all_args 中的起始下标
+    # (模块名 token 不进 all_args, 边界必须用 all_args 长度衡量, 否则切片错位)
+    local a_start=0
 
     while ((i < ${#args[@]})); do
         local arg="${args[i]}"
@@ -72,11 +75,12 @@ function parse_arguments_by_module() {
             local candidate="${arg#--}"
             if is_valid_module "${candidate}"; then
                 if [[ -n "${current_module}" ]]; then
-                    module_arg_indices["${current_module}"]="${i_start}"
-                    module_arg_indices["${current_module}_end"]="$i"
+                    module_arg_indices["${current_module}"]="${a_start}"
+                    module_arg_indices["${current_module}_end"]="${#all_args[@]}"
                 fi
                 current_module="${candidate}"
-                i_start="$i"
+                module_order+=("${candidate}")
+                a_start="${#all_args[@]}"
                 i=$((i + 1))
                 continue
             fi
@@ -86,7 +90,7 @@ function parse_arguments_by_module() {
     done
 
     if [[ -n "$current_module" ]]; then
-        module_arg_indices["$current_module"]="$i_start"
+        module_arg_indices["$current_module"]="${a_start}"
         module_arg_indices["${current_module}_end"]="${#all_args[@]}"
     fi
     if [[ ${#module_arg_indices[@]} -eq 0 && ${#all_args[@]} -gt 0 ]]; then
@@ -105,13 +109,19 @@ function run_module_with_args() {
         LOGERROR "Module dir not found: ${module_name}"
         exit 1
     }
-    local script_path="${module_dir}/run.sh"
-
-    if [[ -x "${script_path}" ]]; then
+    # 与 load_registered_modules 的判定保持一致: run.sh 优先, 其次 run
+    local script_path="" candidate
+    for candidate in run.sh run; do
+        if [[ -x "${module_dir}/${candidate}" ]]; then
+            script_path="${module_dir}/${candidate}"
+            break
+        fi
+    done
+    if [[ -n "${script_path}" ]]; then
         # LOGINFO "Running module: ${module_name}"
         "${script_path}" "${args[@]}"
     else
-        LOGERROR "Module script not found or not executable: ${script_path}"
+        LOGERROR "Module script not found or not executable in: ${module_dir}"
         exit 1
     fi
 }
@@ -134,36 +144,37 @@ function show_global_help() {
     echo " $(basename "$0") [--module] <module_args> <--module> <--module> <module_args>"
     echo ""
     echo "Available modules:"
-    local meta description
+    local meta description usage module
 
-    for module in "${!registered_modules_map[@]}"; do
-        meta=$(read_module_metadata "${module}" 2>/dev/null)
-        description=$(echo "${meta}" | grep -oP  '(?<=^description: ).*$')
-        usage=$(echo "${meta}" | grep -oP  '(?<=^usage: ).*$')
+    # 关联数组遍历顺序不确定, 排序后输出保证帮助列表稳定
+    # 各 $(...) 加 || true: 缺少 readme.md / 缺 description 时命令替换非零,
+    # 在 set -e 下会直接终止整个帮助输出
+    while IFS= read -r module; do
+        meta=$(read_module_metadata "${module}" 2>/dev/null || true)
+        description=$(echo "${meta}" | grep -oP  '(?<=^description: ).*$' || true)
+        usage=$(echo "${meta}" | grep -oP  '(?<=^usage: ).*$' || true)
         echo "  --${module}"
         echo "      ${description}"
-        [[ -n "${usage}" ]] && echo "      ${usage}"
-    done
+        if [[ -n "${usage}" ]]; then
+            echo "      ${usage}"
+        fi
+    done < <(printf '%s\n' "${!registered_modules_map[@]}" | sort)
+    return 0
 }
 
 function main() {
     load_registered_modules
-    if [[ $# -eq 0 ]]; then
+    # 帮助优先于模块解析: 否则 -h/help 会被当作"不属于任何模块"而报错退出
+    if [[ $# -eq 0 || "$1" == "-h" || "$1" == "--help" || "$1" == "help" ]]; then
         show_global_help
         exit 0
     fi
 
     parse_arguments_by_module "$@"
 
-    if [[ "$1" == "-h" ]] || [[ "$1" == "help" ]]; then
-        show_global_help
-        exit 0
-    fi
-
-    for module in "${!module_arg_indices[@]}"; do
-        if [[ "$module" == *_end ]]; then
-            continue
-        fi
+    # 按命令行出现顺序执行模块(关联数组遍历无序, 用 module_order 保持顺序)
+    local module
+    for module in "${module_order[@]}"; do
         local start=${module_arg_indices[$module]}
         local end=${module_arg_indices["${module}_end"]}
         local count=$((end - start))
