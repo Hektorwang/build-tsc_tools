@@ -33,6 +33,38 @@
   系统资源使用情况对比工具  
   对比给定的两个时间点的系统资源使用情况  
 
+## 安装
+
+制成品为单个 `noarch` RPM 包, 包内同时携带 `x86_64` 与 `aarch64` 两架构的自带二进制, 安装期按本机 `arch` 择优部署(架构不在 `.supported_env.conf` 白名单内时, `%pre` 会拒绝安装)。
+
+```bash
+# 安装
+rpm -ivh tsc_tools-<version>-<release>.noarch.rpm
+
+# 升级 / 重装 (带旧版本时用它, 会走升级路径)
+rpm -Uvh tsc_tools-<version>-<release>.noarch.rpm
+
+# 查询
+rpm -q tsc_tools
+rpm -ql tsc_tools
+
+# 卸载
+rpm -e tsc_tools
+```
+
+安装前 `%pre` 会校验 `root` 权限、CPU 架构与发行版主版本(见 `.supported_env.conf`), 不通过则直接中止安装, 不留下半成品文件。
+
+`/root/.vimrc` 不会被无条件覆盖: 已存在且内容不同时先备份为 `/root/.vimrc.tsc_tools.bak`(同名备份已存在则另存带时间戳的副本), 备份路径记入 `/home/tsc/tsc_tools/.installed_manifest`, 卸载时自动还原。
+
+卸载时回收:
+
+- `/bin` 下由本包部署的二进制与别名软链(逐文件内容指纹校验, 不一致则跳过, 不误删系统同名命令)
+- `/home/tsc/tsc_tools/bin`
+- `/root/.vimrc`(仍与本包版本一致才删, 用户改过则保留)
+- `/home/tsc/tsc_profile` 中的 `TSC_TOOLS` 块(保留用户自定义内容, 摘除后文件为空则一并删除)
+
+卸载时保留: `/var/log/tsc` 及运行期日志、`/home/tsc/tsc_profile.d` 下的自定义片段。
+
 ## 用法
 
 ```bash
@@ -56,3 +88,18 @@ tsc --help
 tsc --模块名 --help
 glow /home/tsc/tsc_tools/modules/模块名/readme.md
 ```
+
+## 打包
+
+```bash
+./build.sh
+```
+
+打包机需提供:
+
+- `nfpm`(默认取 `/bin/nfpm`, 亦可在 `PATH` 中提供或用 `NFPM_BIN=/path/to/nfpm ./build.sh` 指定)
+- `dos2unix`
+
+版本号取自 `release-note.md` 顶部的 `Version=`, `release` 号取构建日期。RPM scriptlet 源码在 `packaging/rpm/`, 其中 `%pre` 由 `build.sh` 渲染生成(内联 `lib_min.sh`、`.supported_env.conf`、`env_check.sh`, 因其运行时包内文件尚未落盘)。
+
+开发/打包的流程、约定与注意事项见 [README-dev.md](README-dev.md)。

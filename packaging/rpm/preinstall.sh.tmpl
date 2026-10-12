@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# tsc_tools RPM ---- %pre (安装前校验)
+#
+# 执行时机: 包文件解压落盘之前, 因此脚本必须自包含。
+# build.sh 会把 `# >>> INJECT <file>` 标记替换为下列文件的实际内容:
+#   packaging/rpm/lib_min.sh   最小日志库 (替代尚未落盘的 tsc_tools/func)
+#   .supported_env.conf        受支持环境清单 (单一事实源)
+#   packaging/rpm/env_check.sh 检测与准入逻辑 (随包发布, 供 %post 复用)
+#
+# %pre 返回非零时 rpm 会中止安装, 环境不符的机器不会留下半成品文件。
+##################################################
+# shellcheck disable=SC1090,SC1091,SC2034
+set -o errexit
+set -o nounset
+set -o pipefail
+set +o posix
+shopt -s nullglob
+
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+# RPM scriptlet 由 /bin/sh 执行, 本脚本依赖 bash (>= 4) 的关联数组
+if [[ -z "${BASH_VERSION:-}" ]]; then
+    echo "ERROR: /bin/sh is not bash, tsc_tools requires bash >= 4.0 to install." >&2
+    exit 1
+fi
+if ((BASH_VERSINFO[0] < 4)); then
+    echo "ERROR: Bash version too low (${BASH_VERSION}), requires at least 4.0." >&2
+    exit 1
+fi
+
+# >>> INJECT packaging/rpm/lib_min.sh
+# >>> INJECT .supported_env.conf
+# >>> INJECT packaging/rpm/env_check.sh
+
+declare -A system_info
+
+if ! check_env; then
+    echo "" >&2
+    echo "tsc_tools: 环境准入校验未通过, 已中止安装 (未写入任何文件)." >&2
+    echo "  受支持的架构/发行版见 .supported_env.conf 与 README.md" >&2
+    exit 1
+fi
+
+exit 0

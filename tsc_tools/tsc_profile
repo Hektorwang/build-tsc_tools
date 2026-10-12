@@ -2,4 +2,10 @@
 if [[ ":$PATH:" != *":/home/tsc/tsc_tools/bin/:"* ]]; then
   export PATH="/home/tsc/tsc_tools/bin/:/home/tsc/tsc_tools/:$PATH"
 fi
+# 加载 /home/tsc/tsc_profile.d/*.sh 下的自定义片段
+# (本包不往该目录放文件, 留给现场自定义或其他工具 drop-in)
+for _tsc_profile_d in /home/tsc/tsc_profile.d/*.sh; do
+  [ -r "${_tsc_profile_d}" ] && . "${_tsc_profile_d}"
+done
+unset _tsc_profile_d
 # TSC_TOOLS: END

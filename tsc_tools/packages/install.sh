@@ -9,6 +9,10 @@ shopt -s nullglob
 
 BINARY_TOOLS_DIR="$(readlink -f "$(dirname "$0")")"
 
+# 部署清单: 与 RPM %post 约定为同一路径, 记录需要回收/还原的项
+# (%post 调用本脚本前会先清空清单, 本脚本与 %post 各自追加)
+MANIFEST_FILE="$(dirname "${BINARY_TOOLS_DIR}")/.installed_manifest"
+
 # 目前支持的二进制工具
 readonly -A SUPPORTED_BINARY_TOOLS=(
     ["fio"]="-v"
@@ -29,6 +33,47 @@ readonly -A SUPPORTED_BINARY_TOOLS=(
 # 参数:
 #   None
 ##################################################
+##################################################
+# 安装 vimrc
+# 已存在且与本包自带的 vimrc 不同时, 先备份再覆盖, 避免丢失用户原有配置;
+# 备份路径以 VIMRC_BACKUP:<path> 记入部署清单, RPM 卸载时据此还原
+# 全局变量:
+#   BINARY_TOOLS_DIR (vimrc 所在目录)
+#   MANIFEST_FILE    (部署清单, 由 RPM %post 创建, 单独执行时追加即可)
+# 参数:
+#   None
+##################################################
+_install_vimrc() {
+    local src="${BINARY_TOOLS_DIR}/vimrc"
+    local dest="/root/.vimrc"
+    local backup
+
+    if [[ ! -f "${src}" ]]; then
+        LOGWARNING "vimrc not bundled, skip install"
+        return 0
+    fi
+
+    # 已是本包版本: 既不覆盖也不备份, 保证重复安装/升级幂等
+    if [[ -f "${dest}" ]] && cmp -s "${dest}" "${src}"; then
+        LOGINFO "${dest} already matches the bundled vimrc, skip"
+        return 0
+    fi
+
+    if [[ -s "${dest}" ]]; then
+        backup="${dest}.tsc_tools.bak"
+        # 固定名的备份已存在时不再覆盖 (保留最初那份), 另存带时间戳的副本
+        [[ -e "${backup}" ]] && backup="${backup}.$(date '+%Y%m%d%H%M%S')"
+        if \cp -p "${dest}" "${backup}"; then
+            LOGSUCCESS "Backed up ${dest} -> ${backup}"
+            printf 'VIMRC_BACKUP:%s\n' "${backup}" >>"${MANIFEST_FILE}"
+        else
+            LOGWARNING "Failed to back up ${dest}"
+        fi
+    fi
+
+    \cp "${src}" "${dest}" && LOGSUCCESS "Installed ${dest}"
+}
+
 _install() {
     local tool_name failed_tools=() installed_tools=() missing_tools=()
     mkdir -p /home/tsc/tsc_tools/bin/
@@ -49,9 +94,7 @@ _install() {
     if [[ ${#installed_tools[@]} -gt 0 ]]; then
         LOGSUCCESS "Installed tools: ${installed_tools[*]}"
     fi
-    LOGINFO "Install vimrc"
-    \cp "${BINARY_TOOLS_DIR}"/vimrc /root/.vimrc
-    LOGSUCCESS "Installed vimrc"
+    _install_vimrc
 }
 
 _install_raid_cli() {

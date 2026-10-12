@@ -1,5 +1,19 @@
 # release-note
 
+## Version=2.1.6
+
+1. refactor(build): 制成品由 makeself 自解压包改为 RPM, 产出 `release/tsc_tools-<version>-<release>.noarch.rpm`(`version` 取自本文件 `Version=`, `release` 为构建日期); 删除 `makeself.sh`/`makeself-header.sh`/`lib/makeself-2.5.0.run` 与自解压入口 `install.sh`, 打包脚本集中到 `packaging/rpm/`
+2. feat(build): 打包前检查打包机是否提供 `nfpm`(默认 `/bin/nfpm`, 可用 `NFPM_BIN` 覆盖), 缺失时明确报错退出; 产物自检包含包信息/依赖/文件数/`tsc` 可执行位/x86_64 与 aarch64 两套自带二进制是否齐全与三段 scriptlet 是否写入
+3. feat(rpm): `%pre` 做环境准入校验(root 权限、CPU 架构、发行版家族与主版本), 不通过则中止安装, 不留下半成品文件——原先自解压包是先解包再校验
+4. feat(rpm): `%post` 沿用 `packages/install.sh` 的探测式部署逻辑(二进制、`/bin` 工具、RAID CLI、`/root/.vimrc`), 并记录 `.installed_manifest` 供卸载回收; `%preun` 仅在真卸载(`$1==0`)时回收, 升级(`rpm -U`)交由新包 `%post` 重建, 不再出现"升级过程中工具被删空"的窗口
+5. fix(rpm): `%preun` 回收 `/bin/<tool>` 前逐一比对内容指纹, 与包内二进制不一致(系统自带或已被替换)的一律跳过, 不再误删系统同名命令; `/root/.vimrc` 同理, 用户改过则保留
+6. feat(tsc_profile): `TSC_TOOLS` 块增加 `/home/tsc/tsc_profile.d/*.sh` 片段加载, 便于现场自定义或其他工具 drop-in; 注入逻辑保持幂等(先摘旧块再插入)
+7. docs: README 补充 RPM 安装/升级/卸载/重装说明与卸载回收范围
+8. fix(packages/install.sh): `/root/.vimrc` 不再无条件覆盖——已存在且内容不同时先备份为 `/root/.vimrc.tsc_tools.bak`(该备份已存在则另存带时间戳副本, 保留最初那份), 备份路径以 `VIMRC_BACKUP:` 记入 `.installed_manifest`; `%preun` 删除本包 vimrc 后自动还原该备份, vimrc 已被用户改动则保留不动; 内容已是本包版本时不覆盖也不备份, 保证重复安装幂等
+9. refactor: `packages/install.sh` 与 `%post`/`%preun` 约定同一份部署清单路径 (`<TSC_TOOLS_DIR>/.installed_manifest`), 由 `%post` 清空后各自追加
+10. fix(rpm): 补上此前漏声明的硬件检查依赖 `pciutils`(lspci, RAID 卡探测)、`sysstat`(sar, `tsc_collectSar` 与 `tsc_sysinit` HISTORY 配置)、`dmidecode`(序列号/内存条/厂商采集), 按硬依赖 `Requires` 声明——本工具核心功能即硬件检查, 三者缺失会让采集结论不完整, 装不上时应显式暴露而非静默降级; 特殊场景可用 `rpm -ivh --nodeps` 绕过。`smartctl` 代码里无引用故不声明, `dos2unix` 仅打包期使用不该进运行期依赖
+11. fix(rpm): `%post` 的部署清单不再把 `/bin/<tool>` 上的系统软链记为 `LINK`(系统自带软链会被 `install.sh` 的 `\cp` 穿透改写目标, 软链本身却留存), 改为只记录"常规文件且指纹与本包自带二进制一致"的条目, 消除 `%preun` 误删系统同名软链的路径
+
 ## Version=2.1.5
 
 1. fix(func): `__log` 恢复行尾换行——2.1.4 分离终端彩色与日志纯文本两路时, 格式化结果经 `$(printf ...)` 命令替换赋值, 行尾 `\n` 被命令替换剥掉, 两路 `printf '%s'` 均无换行, 终端输出与日志文件里所有日志行连成一片; 改用 `printf -v` 直接赋值保留换行(install.sh 与各模块均 source 公共 func, 一处修复全覆盖)

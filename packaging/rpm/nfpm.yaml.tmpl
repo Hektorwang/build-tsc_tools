@@ -1,0 +1,45 @@
+# 由 build.sh 渲染生成, 请勿手工编辑
+# 模板占位符: @VERSION@ @RELEASE@ @STAGE_DIR@
+name: tsc_tools
+arch: noarch
+platform: linux
+version: "@VERSION@"
+release: "@RELEASE@"
+maintainer: tsc_tools maintainers
+vendor: TSC
+description: |
+  运维工具集, 集成常用基础运维工具, 以方便运维工作。
+  noarch 包, 包内同时携带 x86_64 与 aarch64 两架构的自带二进制, 安装期按本机架构择优部署。
+
+# 硬依赖: RHEL/Euler 基础件 + 硬件检查必需件
+#   pciutils  (lspci)   — RAID 卡/控制器探测 (硬件检查核心路径, 缺失则退化为 lsmod, RAID 信息不全)
+#   sysstat   (sar)     — tsc_collectSar 与 tsc_sysinit 的 HISTORY 配置
+#   dmidecode           — 序列号/内存条/厂商采集, 缺失则相关字段为空或 Unknown
+# 三者缺失会让硬件检查结论不完整, 故按硬依赖声明: 装不上时应显式暴露缺失,
+# 而不是装上一个"采不全"的工具。特殊场景可用 rpm -ivh --nodeps 绕过
+depends:
+  - bash >= 4.0
+  - coreutils
+  - gawk
+  - grep
+  - sed
+  - util-linux
+  - findutils
+  - procps-ng
+  - pciutils
+  - sysstat
+  - dmidecode
+
+contents:
+  - src: "@STAGE_DIR@/tsc_tools/"
+    dst: /home/tsc/tsc_tools
+
+scripts:
+  preinstall: "@STAGE_DIR@/rpm-scripts/preinstall"
+  postinstall: "@STAGE_DIR@/rpm-scripts/postinstall"
+  preremove: "@STAGE_DIR@/rpm-scripts/preremove"
+
+rpm:
+  arch: noarch
+  # gzip 兼容性最广 (EL7 的 rpm 不支持 zstd), 代价是体积略大
+  compression: gzip

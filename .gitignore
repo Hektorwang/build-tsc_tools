@@ -2,6 +2,7 @@
 __pycache__
 /.vscode
 /release
+/stage
 /tmp
 rag.md
 /tsc_tools/README.md

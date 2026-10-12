@@ -1,26 +1,16 @@
-#!/usr/bin/env bash
+##################################################
+# 运行环境检测与准入校验
 #
-# 用于安装 tsc_tools
+# 本文件是单一事实源, 被两处复用:
+#   1. build.sh 将其内联进 RPM %pre 脚本 (彼时包文件未落盘, 必须自包含)
+#   2. 随包发布为 /home/tsc/tsc_tools/lib/env_check.sh, 供 %post 复用
 #
-#################################### cc=80 #####################################
-# shellcheck disable=SC1090,SC1091,SC2034
-set -o errexit
-set -o nounset
-set -o pipefail
-set +o posix
-shopt -s nullglob
-
-export PATH=/bin:/sbin:/usr/bin:/usr/sbin
-
-WORK_DIR="$(dirname "$(readlink -f "$0")")"
-source "${WORK_DIR}/tsc_tools/func"
-TSC_HOME_DIR="/home/tsc"
-TSC_TOOLS_DIR="${TSC_HOME_DIR}/tsc_tools"
-SOURCE_TSC_PROFILE="${WORK_DIR}/tsc_tools/tsc_profile"
-DEST_TSC_PROFILE="${TSC_HOME_DIR}/tsc_profile"
-SUPPORTED_ENV_FILE="${WORK_DIR}/tsc_tools/.supported_env.conf"
-source "${SUPPORTED_ENV_FILE}"
-declare -A system_info
+# 前置条件 (调用方保证):
+#   - 已提供 LOGDEBUG/LOGINFO/LOGSUCCESS/LOGWARNING/LOGERROR
+#     (%pre 用 lib_min.sh, %post 用 tsc_tools/func)
+#   - 已 source .supported_env.conf (提供 SUPPORTED_* 变量)
+#   - 已声明 declare -A system_info
+##################################################
 
 ##################################################
 # 检测系统信息，包括发行版、版本、内核、架构等
@@ -155,12 +145,6 @@ check_env() {
         ret=127
     fi
 
-    # IFS=',' read -r -a supported_service_mgrs_array <<<"$SUPPORTED_SERVICE_MANAGER"
-    # if ! is_element_in_array "$current_service_mgr" "${supported_service_mgrs_array[@]}"; then
-    #     LOGERROR "Service manager not supported: Current service manager '${current_service_mgr}' is not in the supported list '${SUPPORTED_SERVICE_MANAGER}'."
-    #     ret=127
-    # fi
-
     local distro_version_check_passed=false
     local distro_rule_var_name="DISTRO_VERSION_RULES_${current_distro_variety}"
     local supported_versions_for_distro="${!distro_rule_var_name:-}"
@@ -200,35 +184,3 @@ check_env() {
     fi
     return "${ret}"
 }
-
-_install() {
-    LOGINFO "${FUNCNAME[0]}"
-    mkdir -p "${TSC_HOME_DIR}"
-    \cp -r "${WORK_DIR}"/tsc_tools "${TSC_HOME_DIR}/"
-    "${TSC_TOOLS_DIR}"/packages/install.sh "${system_info[machine_type]:-vm}"
-    if [[ ! -s "${DEST_TSC_PROFILE}" ]]; then
-        LOGDEBUG "$(\cp "${SOURCE_TSC_PROFILE}" "${DEST_TSC_PROFILE}")"
-    else
-        sed -i "/# TSC_TOOLS: START/,/# TSC_TOOLS: END/d" "${DEST_TSC_PROFILE}"
-        if [[ ! -s "${DEST_TSC_PROFILE}" ]]; then
-            LOGDEBUG "$(\cp "${SOURCE_TSC_PROFILE}" "${DEST_TSC_PROFILE}")"
-        else
-            sed -i "1r ${SOURCE_TSC_PROFILE}" "${DEST_TSC_PROFILE}"
-        fi
-    fi
-    mkdir -p /var/log/tsc
-    LOGSUCCESS "${FUNCNAME[0]}"
-}
-
-check_env || exit 127
-_install
-
-source "${DEST_TSC_PROFILE}"
-echo -e '\033[1;33m'
-echo "--------------------
-usage:
-    source /home/tsc/tsc_profile
-    tsc
---------------------"
-echo -e '\033[0;39m'
-tsc
