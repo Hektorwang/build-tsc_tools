@@ -8,10 +8,32 @@ shopt -s nullglob
 
 WORK_DIR="$(dirname "$(readlink -f "$0")")" && cd "${WORK_DIR}" || exit 99
 script_name="$(basename "$0" 2>/dev/null)"
-RAG_FILE=${WORK_DIR}/tsc_tools/rag.md
+# 定位 modules 与 rag 输出路径
+#   源码树 (gen_rag.sh 在项目根, 同级有 tsc_tools/): 构建期只用源码树 modules,
+#     不 source 已安装的 tsc_profile, 避免构建机上的旧安装版污染 rag 内容
+#   包内/目标机 (gen_rag.sh 在 tsc_tools/ 下): source tsc_profile 拿 TSC_MODULES_DIR,
+#     支持多工具 (tsc_python 等) 扩展 modules
+if [[ -d "${WORK_DIR}/tsc_tools" ]]; then
+    modules_dirs="${WORK_DIR}/tsc_tools/modules"
+    RAG_FILE="${WORK_DIR}/tsc_tools/rag.md"
+else
+    source /home/tsc/tsc_profile 2>/dev/null || true
+    modules_dirs="${TSC_MODULES_DIR:-${WORK_DIR}/modules}"
+    RAG_FILE="${WORK_DIR}/rag.md"
+fi
+if [[ -z "${modules_dirs}" ]]; then
+    echo "ERROR: no modules dir found under ${WORK_DIR}" >&2
+    exit 1
+fi
 
-# 获取所有模块 readme
-mapfile -t readme_files < <(find ${WORK_DIR}/tsc_tools/modules/ -iname 'readme.md')
+# 获取所有模块 readme (遍历 TSC_MODULES_DIR 冒号分隔的多目录, 适配多工具扩展)
+mapfile -t readme_files < <(
+    IFS=':'
+    for _d in ${modules_dirs}; do
+        [[ -d "$_d" ]] || continue
+        find "$_d" -iname 'readme.md'
+    done
+)
 
 # 处理readme文件, 去掉元数据, 并将其下的标题都下沉一级
 parse_readme() {

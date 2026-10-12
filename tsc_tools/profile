@@ -1,0 +1,13 @@
+# tsc_tools drop-in
+# 由 tsc_tools RPM 部署到 /home/tsc/tsc_profile.d/0-tsc_tools-profile
+# 卸载本包时由 %preun 删除; tsc_profile 主入口与 tsc_profile.d 目录保留
+
+# PATH: 本包 bin 与主目录前置
+if [[ ":$PATH:" != *":/home/tsc/tsc_tools/bin/:"* ]]; then
+  export PATH="/home/tsc/tsc_tools/bin/:/home/tsc/tsc_tools/:$PATH"
+fi
+
+# 模块目录: 各工具把自己的 modules 追加到 TSC_MODULES_DIR 末尾
+# 加载顺序=文件名排序(0- 在 1- 前)=变量内顺序=tsc 遍历顺序, 语义自洽
+# 不同工具 modules 不重名, 无覆盖; 若需让某工具优先, 调小其 drop-in 前缀数字
+export TSC_MODULES_DIR="${TSC_MODULES_DIR:+${TSC_MODULES_DIR}:}/home/tsc/tsc_tools/modules"

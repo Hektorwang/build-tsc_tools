@@ -3,16 +3,18 @@
 # tsc_tools RPM ---- %preun (卸载前回收)
 #
 #   $1 == 0  真卸载 (rpm -e):       执行回收
-#   $1 >= 1  升级 (rpm -U / 重装):   直接跳过, 由新包的 %post 重建, 避免删掉正在启用的文件
+#   $1 >= 1  升级 (rpm -U / 重装):   直接跳过, 由新包的 %post 重建
 #
-# 回收范围:
-#   1. /bin 下由本包部署的二进制与别名软链 (按 .installed_manifest + 内容指纹双重校验)
+# 回收范围 (按 .installed_manifest, FILE 类型按 hash 校验防误删被改文件):
+#   1. /bin 下由本包部署的二进制与软链 (FILE:校验 hash 一致才删, LINK:直接删)
 #   2. /home/tsc/tsc_tools/bin  (packages/install.sh 生成, 不属于 rpm 文件清单)
-#   3. /root/.vimrc             (内容仍与本包 packages/vimrc 一致才删, 用户改过则保留)
-#   4. /home/tsc/tsc_profile 中的 TSC_TOOLS 块 (保留用户自定义内容; 删空后文件也删除)
+#   3. /root/.vimrc  (manifest 中 FILE 记录, hash 一致才删; 删后还原 VIMRC_BACKUP)
+#   4. 本包 drop-in /home/tsc/tsc_profile.d/0-tsc_tools-profile
 #
 # 保留 (不回收):
-#   /var/log/tsc 及运行期日志、/home/tsc/tsc_profile.d 下的自定义片段
+#   /home/tsc/tsc_profile        公共入口, 其他工具可能仍在用
+#   /home/tsc/tsc_profile.d 目录 其他工具的 drop-in 可能还在
+#   /var/log/tsc 及运行期日志
 #
 # 本脚本只使用 POSIX 语法且任何情况下都返回 0: %preun 非零会导致 rpm 拒绝卸载,
 # 让机器卡在"卸不掉"的状态比留下几个文件更糟。
@@ -25,7 +27,9 @@ export PATH
 TSC_HOME_DIR="/home/tsc"
 TSC_TOOLS_DIR="${TSC_HOME_DIR}/tsc_tools"
 DEST_TSC_PROFILE="${TSC_HOME_DIR}/tsc_profile"
+TSC_PROFILE_D_DIR="${TSC_HOME_DIR}/tsc_profile.d"
 MANIFEST_FILE="${TSC_TOOLS_DIR}/.installed_manifest"
+DROPIN_FILE="${TSC_PROFILE_D_DIR}/0-tsc_tools-profile"
 
 # $1 为卸载后剩余的本包实例数: 0=真卸载, >=1=升级
 if [ "${1:-0}" != "0" ]; then
@@ -37,61 +41,44 @@ LOG() {
     printf '%s | %-8s | tsc_tools-preun - %s\n' "$(date "+%F %T")" "$1" "$2" >&2
 }
 
-# 判断两个文件二进制内容是否一致 (无 sha256sum 时退化为 cmp)
-files_identical() {
-    [ -f "$1" ] && [ -f "$2" ] || return 1
-    if command -v sha256sum >/dev/null 2>&1; then
-        [ "$(sha256sum <"$1" | awk '{print $1}')" = "$(sha256sum <"$2" | awk '{print $1}')" ]
-    else
-        cmp -s "$1" "$2"
-    fi
-}
-
-# 取本包自带二进制路径: packages/<tool>/<tool>-$(arch) 优先于 <tool>-noarch
-bundled_binary_for() {
-    _tool="$1"
-    for _suffix in "$(arch)" "noarch"; do
-        _candidate="${TSC_TOOLS_DIR}/packages/${_tool}/${_tool}-${_suffix}"
-        if [ -f "${_candidate}" ]; then
-            printf '%s' "${_candidate}"
-            return 0
-        fi
-    done
-    return 1
-}
-
 LOG "INFO" "cleanup start"
 
-# ---------- 1. 回收 /bin 下由本包部署的二进制 ----------
+# ---------- 1. 按 manifest 回收 /bin 下本包部署的二进制 ----------
+# manifest 每行: FILE:<path>:<sha256> | LINK:<path> | VIMRC_BACKUP:<path>
 vimrc_backup=""
 if [ -f "${MANIFEST_FILE}" ]; then
     while IFS= read -r entry; do
         [ -n "${entry}" ] || continue
         kind="${entry%%:*}"
-        path="${entry#*:}"
+        rest="${entry#*:}"
 
         if [ "${kind}" = "LINK" ]; then
-            if [ -L "${path}" ]; then
-                rm -f "${path}" && LOG "SUCCESS" "removed symlink ${path}"
+            if [ -L "${rest}" ]; then
+                rm -f "${rest}" && LOG "SUCCESS" "removed symlink ${rest}"
             fi
             continue
         fi
 
-        # 安装时备份的原始 /root/.vimrc, 待第 3 步还原
         if [ "${kind}" = "VIMRC_BACKUP" ]; then
-            vimrc_backup="${path}"
+            vimrc_backup="${rest}"
             continue
         fi
 
-        tool="$(basename "${path}")"
-        candidate="$(bundled_binary_for "${tool}")" || {
-            LOG "WARNING" "no bundled source for ${path}, skip"
-            continue
-        }
-        if files_identical "${path}" "${candidate}"; then
-            rm -f "${path}" && LOG "SUCCESS" "removed ${path}"
-        else
-            LOG "WARNING" "${path} differs from bundled binary (replaced by system/user), kept"
+        if [ "${kind}" = "FILE" ]; then
+            # FILE:<path>:<sha256>
+            path="${rest%%:*}"
+            sum="${rest#*:}"
+            [ -f "${path}" ] || continue
+            if [ -n "${sum}" ]; then
+                cur_sum="$(sha256sum <"${path}" 2>/dev/null | awk '{print $1}')"
+                if [ "${cur_sum}" = "${sum}" ]; then
+                    rm -f "${path}" && LOG "SUCCESS" "removed ${path}"
+                else
+                    LOG "WARNING" "${path} modified (hash mismatch), kept"
+                fi
+            else
+                LOG "WARNING" "${path} has no recorded hash, skip"
+            fi
         fi
     done <"${MANIFEST_FILE}"
 else
@@ -103,34 +90,20 @@ if [ -d "${TSC_TOOLS_DIR}/bin" ]; then
     rm -rf "${TSC_TOOLS_DIR}/bin" && LOG "SUCCESS" "removed ${TSC_TOOLS_DIR}/bin"
 fi
 
-# ---------- 3. 回收 /root/.vimrc (仅当仍为本包版本) 并还原安装时的备份 ----------
-if [ -f /root/.vimrc ]; then
-    if files_identical /root/.vimrc "${TSC_TOOLS_DIR}/packages/vimrc"; then
-        rm -f /root/.vimrc && LOG "SUCCESS" "removed /root/.vimrc"
-        if [ -n "${vimrc_backup}" ] && [ -f "${vimrc_backup}" ]; then
-            mv -f "${vimrc_backup}" /root/.vimrc &&
-                LOG "SUCCESS" "restored ${vimrc_backup} -> /root/.vimrc"
-        fi
-    else
-        LOG "WARNING" "/root/.vimrc has been modified, kept"
-    fi
+# ---------- 3. 还原 /root/.vimrc 备份 (若刚才删了本包 vimrc 且有备份) ----------
+# 仅当 /root/.vimrc 已被第1步删除 (hash 一致) 且存在安装时备份时还原;
+# 用户改过 vimrc (hash 不一致, 未删) 则不还原, 保留用户版本
+if [ -n "${vimrc_backup}" ] && [ -f "${vimrc_backup}" ] && [ ! -f /root/.vimrc ]; then
+    mv -f "${vimrc_backup}" /root/.vimrc &&
+        LOG "SUCCESS" "restored ${vimrc_backup} -> /root/.vimrc"
 fi
 
-# ---------- 4. 摘除 /home/tsc/tsc_profile 中的 TSC_TOOLS 块 ----------
-if [ -f "${DEST_TSC_PROFILE}" ]; then
-    if grep -q '# TSC_TOOLS: START' "${DEST_TSC_PROFILE}" 2>/dev/null; then
-        sed -i '/# TSC_TOOLS: START/,/# TSC_TOOLS: END/d' "${DEST_TSC_PROFILE}"
-        LOG "SUCCESS" "removed TSC_TOOLS block from ${DEST_TSC_PROFILE}"
-        # 摘除后若已无实质内容 (仅剩空行), 连文件一起删除
-        if [ -z "$(sed '/^[[:space:]]*$/d' "${DEST_TSC_PROFILE}" 2>/dev/null)" ]; then
-            rm -f "${DEST_TSC_PROFILE}" && LOG "SUCCESS" "removed empty ${DEST_TSC_PROFILE}"
-        fi
-    else
-        LOG "WARNING" "no TSC_TOOLS block in ${DEST_TSC_PROFILE}, kept as is"
-    fi
+# ---------- 4. 删除本包 drop-in (公共入口与 tsc_profile.d 目录保留) ----------
+if [ -f "${DROPIN_FILE}" ]; then
+    rm -f "${DROPIN_FILE}" && LOG "SUCCESS" "removed drop-in ${DROPIN_FILE}"
 fi
 
 rm -f "${MANIFEST_FILE}"
 
-LOG "INFO" "cleanup done (/var/log/tsc and ${TSC_HOME_DIR}/tsc_profile.d are kept)"
+LOG "INFO" "cleanup done (tsc_profile, tsc_profile.d, /var/log/tsc are kept)"
 exit 0

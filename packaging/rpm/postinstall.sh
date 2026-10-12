@@ -96,46 +96,67 @@ bundled_binary_for() {
 # 输出:
 #   ${MANIFEST_FILE}, 每行形如 FILE:/bin/jq 或 LINK:/bin/storcli
 ##################################################
+# 记录"本包 cp 到 /bin 且内容与本包自带二进制一致"的 raid_cli, 带 hash
+# (raid_cli 由 install.sh 的 _install_raid_cli 条件安装, 不在 SUPPORTED_BINARY_TOOLS 循环内)
+_record_bundled_in_bin() {
+    local tool="$1" bin="/bin/${1}" candidate
+    candidate="$(bundled_binary_for "${tool}")" || return 0
+    [[ -f "${bin}" && ! -L "${bin}" ]] || return 0
+    if files_identical "${bin}" "${candidate}"; then
+        local sum
+        sum="$(sha256sum <"${bin}" | awk '{print $1}')"
+        echo "FILE:${bin}:${sum}" >>"${MANIFEST_FILE}"
+    fi
+}
+
 record_manifest() {
-    local pkg_dir tool candidate bin_path
+    local pkg_dir tool candidate bin_path sum
+    # 1. packages/*/ 通用工具: 只记"常规文件且内容与本包自带二进制一致"的, 带 hash
+    #    系统可能自带同名软链, install.sh 的 \cp 会穿透软链改写其目标(软链留存),
+    #    若记成 LINK 则 %preun 无条件 rm -f 会误删系统软链; 本包自建软链只有 /bin/storcli
     for pkg_dir in "${TSC_TOOLS_DIR}"/packages/*/; do
         [[ -d "${pkg_dir}" ]] || continue
         tool="$(basename "${pkg_dir}")"
+        # vimrc 不是二进制工具, 跳过 (单独处理)
+        [[ "${tool}" == "vimrc" ]] && continue
         candidate="$(bundled_binary_for "${tool}")" || continue
         bin_path="/bin/${tool}"
-        # 只记录"常规文件且内容与本包自带二进制一致"的条目:
-        # 系统可能自带同名软链, 而 install.sh 的 \cp 会穿透软链改写其目标(软链本身留存),
-        # 若记成 LINK 则 %preun 会无条件 rm -f, 误删系统软链;
-        # 本包自己创建的软链只有 /bin/storcli, 在循环外单独处理
         if [[ -f "${bin_path}" && ! -L "${bin_path}" ]] &&
             files_identical "${bin_path}" "${candidate}"; then
-            echo "FILE:${bin_path}" >>"${MANIFEST_FILE}"
+            sum="$(sha256sum <"${bin_path}" | awk '{print $1}')"
+            echo "FILE:${bin_path}:${sum}" >>"${MANIFEST_FILE}"
         fi
     done
-    # packages/install.sh 额外创建的别名软链 /bin/storcli -> /bin/storcli64
+    # 2. raid_cli: sas3ircu / storcli64 / arcconf (条件安装)
+    _record_bundled_in_bin sas3ircu
+    _record_bundled_in_bin storcli64
+    _record_bundled_in_bin arcconf
+    # /bin/storcli 软链 (install.sh 创建: /bin/storcli -> /bin/storcli64)
     if [[ -L /bin/storcli && "$(readlink /bin/storcli)" == "/bin/storcli64" ]]; then
         echo "LINK:/bin/storcli" >>"${MANIFEST_FILE}"
+    fi
+    # 3. /root/.vimrc (本包覆盖了才记, 卸载时按 hash 校验删除并还原 VIMRC_BACKUP)
+    if [[ -f /root/.vimrc && -f "${TSC_TOOLS_DIR}/packages/vimrc" ]] &&
+        files_identical /root/.vimrc "${TSC_TOOLS_DIR}/packages/vimrc"; then
+        sum="$(sha256sum </root/.vimrc | awk '{print $1}')"
+        echo "FILE:/root/.vimrc:${sum}" >>"${MANIFEST_FILE}"
     fi
     LOGINFO "Deployment manifest: ${MANIFEST_FILE} ($(wc -l <"${MANIFEST_FILE}") entries)"
 }
 
 ##################################################
-# 注入/刷新 /home/tsc/tsc_profile 中的 TSC_TOOLS 块
-# 幂等: 先摘除旧块再插入, 升级或重复安装不会叠加
+# 部署 /home/tsc/tsc_profile 公共入口 (仅不存在时) 与本包 drop-in
+# 公共入口是基础设施, 已存在不覆盖, 卸载不删; drop-in 升级时刷新为新版
 ##################################################
 inject_profile() {
-    if [[ ! -s "${DEST_TSC_PROFILE}" ]]; then
+    if [[ ! -e "${DEST_TSC_PROFILE}" ]]; then
         \cp "${SOURCE_TSC_PROFILE}" "${DEST_TSC_PROFILE}"
         LOGSUCCESS "Created ${DEST_TSC_PROFILE}"
-        return 0
-    fi
-    sed -i "/# TSC_TOOLS: START/,/# TSC_TOOLS: END/d" "${DEST_TSC_PROFILE}"
-    if [[ ! -s "${DEST_TSC_PROFILE}" ]]; then
-        \cp "${SOURCE_TSC_PROFILE}" "${DEST_TSC_PROFILE}"
     else
-        sed -i "1r ${SOURCE_TSC_PROFILE}" "${DEST_TSC_PROFILE}"
+        LOGINFO "${DEST_TSC_PROFILE} already exists, keep it"
     fi
-    LOGSUCCESS "Refreshed TSC_TOOLS block in ${DEST_TSC_PROFILE}"
+    \cp "${TSC_TOOLS_DIR}/profile" "${TSC_PROFILE_D_DIR}/0-tsc_tools-profile"
+    LOGSUCCESS "Deployed drop-in ${TSC_PROFILE_D_DIR}/0-tsc_tools-profile"
 }
 
 ##################################################
@@ -177,6 +198,8 @@ usage:
     tsc
 --------------------"
 echo -e '\033[0;39m'
+# 安装期验证 tsc: 此时 drop-in 已就位, source 公共入口后 TSC_MODULES_DIR 可用
+source "${DEST_TSC_PROFILE}" 2>/dev/null || true
 "${TSC_TOOLS_DIR}/tsc" || true
 
 LOGSUCCESS "tsc_tools %post done"

@@ -111,6 +111,8 @@ mkdir -p "${STAGE_DIR}/rpm-scripts" "${STAGE_DIR}/tsc_tools/lib"
 \cp "${PROJECT_DIR}"/release-note.md "${PROJECT_DIR}"/tsc_tools/
 \cp "${PROJECT_DIR}"/.supported_env.conf "${PROJECT_DIR}"/tsc_tools/
 \cp -r "${PROJECT_DIR}"/tsc_tools/. "${STAGE_DIR}"/tsc_tools/
+# gen_rag.sh 随包发布, 供目标机生成多工具合并 rag (source tsc_profile 后读 TSC_MODULES_DIR)
+\cp "${PROJECT_DIR}"/gen_rag.sh "${STAGE_DIR}"/tsc_tools/gen_rag.sh
 # env_check.sh 随包发布, 供 %post 复用同一份环境检测逻辑
 \cp "${PACKAGING_DIR}"/env_check.sh "${STAGE_DIR}"/tsc_tools/lib/env_check.sh
 
@@ -123,6 +125,7 @@ find "${STAGE_DIR}"/tsc_tools -type f -name "*.sh" -exec dos2unix {} \;
 render_template "${PACKAGING_DIR}/preinstall.sh.tmpl" "${STAGE_DIR}/rpm-scripts/preinstall"
 \cp "${PACKAGING_DIR}"/postinstall.sh "${STAGE_DIR}"/rpm-scripts/postinstall
 \cp "${PACKAGING_DIR}"/preremove.sh "${STAGE_DIR}"/rpm-scripts/preremove
+\cp "${PACKAGING_DIR}"/postremove.sh "${STAGE_DIR}"/rpm-scripts/postremove
 chmod 0755 "${STAGE_DIR}"/rpm-scripts/*
 
 # scriptlet 语法自检: 装到目标机上才发现语法错误代价太高
@@ -180,7 +183,7 @@ if command -v rpm &>/dev/null; then
     fi
     # scriptlet 必须都写进包里 (nfpm 的 preremove 对应 rpm 的 %preun)
     scripts_dump="$(rpm -qp --scripts "${RELEASE_FILE}")"
-    for needle in "preinstall scriptlet" "postinstall scriptlet" "preuninstall scriptlet"; do
+    for needle in "preinstall scriptlet" "postinstall scriptlet" "preuninstall scriptlet" "postuninstall scriptlet"; do
         if ! grep -q "^${needle}" <<<"${scripts_dump}"; then
             echo "ERROR: 产物缺少 ${needle} 段。" >&2
             exit 1

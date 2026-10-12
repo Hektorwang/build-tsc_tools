@@ -1,11 +1,10 @@
-# TSC_TOOLS: START
-if [[ ":$PATH:" != *":/home/tsc/tsc_tools/bin/:"* ]]; then
-  export PATH="/home/tsc/tsc_tools/bin/:/home/tsc/tsc_tools/:$PATH"
-fi
-# 加载 /home/tsc/tsc_profile.d/*.sh 下的自定义片段
-# (本包不往该目录放文件, 留给现场自定义或其他工具 drop-in)
+# /home/tsc/tsc_profile —— 公共入口
+#
+# 首次由 tsc_tools RPM 创建, 卸载本包不删除 (公共基础设施, 其他工具可能仍在用)
+# 内容由各工具的 drop-in (/home/tsc/tsc_profile.d/*.sh) 注入
+# drop-in 按文件名排序加载 (0- 在 1- 之前)
+
 for _tsc_profile_d in /home/tsc/tsc_profile.d/*.sh; do
   [ -r "${_tsc_profile_d}" ] && . "${_tsc_profile_d}"
 done
 unset _tsc_profile_d
-# TSC_TOOLS: END
