@@ -39,11 +39,11 @@ fi
 #创建报告生成文件夹
 [ ! -d /var/log/tsc/tsc_collect_sar ] && mkdir -p /var/log/tsc/tsc_collect_sar
 #创建sar历史文件保存目录
-[ -d /var/log/tsc/tsc_collect_sar/BackSar ] && /bin/rm -rf /var/log/tsc/tsc_collect_sar/BackSar
-mkdir -p /var/log/tsc/tsc_collect_sar/BackSar
-#将当前的历史文件拷贝到/var/log/tsc/tsc_collect_sar/BackSar
+[ -d /var/log/tsc/tsc_collect_sar/back_sar ] && /bin/rm -rf /var/log/tsc/tsc_collect_sar/back_sar
+mkdir -p /var/log/tsc/tsc_collect_sar/back_sar
+#将当前的历史文件拷贝到/var/log/tsc/tsc_collect_sar/back_sar
 echo -n "Backup sar logfile"
-if \cp /var/log/sa/sa?? /var/log/tsc/tsc_collect_sar/BackSar/; then
+if \cp /var/log/sa/sa?? /var/log/tsc/tsc_collect_sar/back_sar/; then
 	echo -e "\033[60G[\033[1;32m  OK  \033[0m]"
 else
 	echo -e "\033[60G[\033[1;31m ERROR \033[0m]"
