@@ -1,5 +1,5 @@
 # tsc_tools drop-in
-# 由 tsc_tools RPM 部署到 /home/tsc/tsc_profile.d/0-tsc_tools-profile
+# 由 tsc_tools RPM 部署到 /home/tsc/tsc_profile.d/0-tsc_tools-profile.sh
 # 卸载本包时由 %preun 删除; tsc_profile 主入口与 tsc_profile.d 目录保留
 
 # PATH: 本包 bin 与主目录前置

@@ -9,7 +9,7 @@
 #   1. /bin 下由本包部署的二进制与软链 (FILE:校验 hash 一致才删, LINK:直接删)
 #   2. /home/tsc/tsc_tools/bin  (packages/install.sh 生成, 不属于 rpm 文件清单)
 #   3. /root/.vimrc  (manifest 中 FILE 记录, hash 一致才删; 删后还原 VIMRC_BACKUP)
-#   4. 本包 drop-in /home/tsc/tsc_profile.d/0-tsc_tools-profile
+#   4. 本包 drop-in /home/tsc/tsc_profile.d/0-tsc_tools-profile.sh
 #
 # 保留 (不回收):
 #   /home/tsc/tsc_profile        公共入口, 其他工具可能仍在用
@@ -29,7 +29,7 @@ TSC_TOOLS_DIR="${TSC_HOME_DIR}/tsc_tools"
 DEST_TSC_PROFILE="${TSC_HOME_DIR}/tsc_profile"
 TSC_PROFILE_D_DIR="${TSC_HOME_DIR}/tsc_profile.d"
 MANIFEST_FILE="${TSC_TOOLS_DIR}/.installed_manifest"
-DROPIN_FILE="${TSC_PROFILE_D_DIR}/0-tsc_tools-profile"
+DROPIN_FILE="${TSC_PROFILE_D_DIR}/0-tsc_tools-profile.sh"
 
 # $1 为卸载后剩余的本包实例数: 0=真卸载, >=1=升级
 if [ "${1:-0}" != "0" ]; then

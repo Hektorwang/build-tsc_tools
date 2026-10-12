@@ -155,8 +155,8 @@ inject_profile() {
     else
         LOGINFO "${DEST_TSC_PROFILE} already exists, keep it"
     fi
-    \cp "${TSC_TOOLS_DIR}/profile" "${TSC_PROFILE_D_DIR}/0-tsc_tools-profile"
-    LOGSUCCESS "Deployed drop-in ${TSC_PROFILE_D_DIR}/0-tsc_tools-profile"
+    \cp "${TSC_TOOLS_DIR}/profile" "${TSC_PROFILE_D_DIR}/0-tsc_tools-profile.sh"
+    LOGSUCCESS "Deployed drop-in ${TSC_PROFILE_D_DIR}/0-tsc_tools-profile.sh"
 }
 
 ##################################################
