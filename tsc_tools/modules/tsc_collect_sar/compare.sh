@@ -10,7 +10,7 @@ if [ $# -lt 3 ]; then
 	exit 1
 fi
 
-REPORT_DIR="/var/log/tsc/CollectSar"
+REPORT_DIR="/var/log/tsc/tsc_collect_sar"
 date1="$1"
 date2="$2"
 ipaddr="$3"

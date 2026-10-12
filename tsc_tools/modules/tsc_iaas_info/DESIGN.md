@@ -1,7 +1,7 @@
 # tsc_iaas_info 设计说明（DESIGN）
 
 状态：**修订版 v0.2，评审中**——本文档经确认后，代码改造与 bug 修复均以本文为准。
-关联：release-note 2.1.2 的 TODO 11/15；外部依赖方：zabbix（runtime stdout）、collectSar 无关。
+关联：release-note 2.1.2 的 TODO 11/15；外部依赖方：zabbix（runtime stdout）、tsc_collect_sar 无关。
 v0.2 修订内容见 §11 修订记录。
 
 ---
@@ -298,7 +298,7 @@ tests/
 
 - 不换语言、不改打包模型（RPM，2026-10-12 起由 makeself 自解压包迁移而来）；
 - 不引入新的外部依赖（smartctl 保持可选增强，不作为必需项）；
-- 不改变 collectSar 等其他模块；
+- 不改变 tsc_collect_sar 等其他模块；
 - 不在本轮解决"加新卡型"以外的扩展（如 NVMe fabric 特有属性），契约已为其留位；
 - **不支持一机多卡**（单机多张 RAID 卡或单卡多控制器）：现役环境不存在该形态（2026-10-01 决策，扩展 §9.1.1"双卡机型"结论至全部卡型）。适配器内部虽保留多控制器循环，但 PD 条目 `ctl_no` 恒 0（lsi/sas_ir/adaptec 三处硬编码），多控制器机器的 `storage[].ctl_no` 不作定位键语义——原"ctl_no 硬编码"修复项随本决策关闭。
 

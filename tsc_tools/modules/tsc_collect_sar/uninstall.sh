@@ -35,9 +35,9 @@ elif [[ "${sar_collector}" == "systemd" ]]; then
 	fi
 fi
 
-/bin/rm -rf /tmp/CollectSar 2>/dev/null
+/bin/rm -rf /tmp/tsc_collect_sar 2>/dev/null
 
-\mv /var/log/tsc/CollectSar /tmp/CollectSar
+\mv /var/log/tsc/tsc_collect_sar /tmp/tsc_collect_sar
 if command -v systemctl &>/dev/null; then
 	systemctl daemon-reload
 	systemctl restart crond

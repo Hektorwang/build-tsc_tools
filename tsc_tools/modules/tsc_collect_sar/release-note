@@ -7,7 +7,7 @@ version 1.2.1 ----------------------------------- 20231213
 version 1.2.0 ----------------------------------- 20231027
 1. refactor: 适配 FitStarrySkyOS 系统.
 2. docs: 新增 release-note 文件.
-3. docs: 修改 Readme 文件, 将 CollectSar.sh 封装成 tsc_collect_sar.
+3. docs: 修改 Readme 文件, 将原始采集脚本封装成 tsc_collect_sar.
 4. docs: 修改 compare.sh 文件, 修复 "Usage" 中的错误.
 
 version 1.1.0 ----------------------------------- 20210916

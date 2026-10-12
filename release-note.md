@@ -8,7 +8,7 @@
 4. fix(rpm): `record_manifest` 补全此前漏记的 RAID CLI(`sas3ircu`/`storcli64`/`arcconf`)与 `/root/.vimrc`, 统一 hash 字段; 系统自带同名文件不覆盖、不记、不卸的判断不变
 5. feat(rpm): `gen_rag.sh` 打进包内 `/home/tsc/tsc_tools/gen_rag.sh`, 目标机 `source tsc_profile` 后可直接运行生成多工具合并 rag; 构建期仍由 `build.sh` 调用生成 `tsc_tools/rag.md`
 6. fix(rpm): 新增 `%postun` scriptlet(`postremove.sh`), `nfpm.yaml` 挂接; 产物自检扩展为四段 scriptlet 完整性校验
-7. refactor: 模块目录 `tsc_collectSar` 重命名为 `tsc_collect_sar`(snake_case, 与其它模块命名一致); `tsc`/`gen_rag.sh` 按目录名自动纳入, 对外用法由 `--tsc_collectSar` 改为 `--tsc_collect_sar`; 运行期数据目录 `/var/log/tsc/CollectSar` 属另一概念, 保持不变
+7. refactor: 模块与运行期目录命名统一为 `tsc_collect_sar`(模块目录 `tsc_tools/modules/tsc_collect_sar`, 报告目录 `/var/log/tsc/tsc_collect_sar`, 卸载暂存 `/tmp/tsc_collect_sar`); 对外用法 `tsc --tsc_collect_sar`, `tsc`/`gen_rag.sh` 按目录名自动纳入
 
 ## Version=2.1.6
 
@@ -21,7 +21,7 @@
 7. docs: README 补充 RPM 安装/升级/卸载/重装说明与卸载回收范围
 8. fix(packages/install.sh): `/root/.vimrc` 不再无条件覆盖——已存在且内容不同时先备份为 `/root/.vimrc.tsc_tools.bak`(该备份已存在则另存带时间戳副本, 保留最初那份), 备份路径以 `VIMRC_BACKUP:` 记入 `.installed_manifest`; `%preun` 删除本包 vimrc 后自动还原该备份, vimrc 已被用户改动则保留不动; 内容已是本包版本时不覆盖也不备份, 保证重复安装幂等
 9. refactor: `packages/install.sh` 与 `%post`/`%preun` 约定同一份部署清单路径 (`<TSC_TOOLS_DIR>/.installed_manifest`), 由 `%post` 清空后各自追加
-10. fix(rpm): 补上此前漏声明的硬件检查依赖 `pciutils`(lspci, RAID 卡探测)、`sysstat`(sar, `tsc_collectSar` 与 `tsc_sysinit` HISTORY 配置)、`dmidecode`(序列号/内存条/厂商采集), 按硬依赖 `Requires` 声明——本工具核心功能即硬件检查, 三者缺失会让采集结论不完整, 装不上时应显式暴露而非静默降级; 特殊场景可用 `rpm -ivh --nodeps` 绕过。`smartctl` 代码里无引用故不声明, `dos2unix` 仅打包期使用不该进运行期依赖
+10. fix(rpm): 补上此前漏声明的硬件检查依赖 `pciutils`(lspci, RAID 卡探测)、`sysstat`(sar, `tsc_collect_sar` 与 `tsc_sysinit` HISTORY 配置)、`dmidecode`(序列号/内存条/厂商采集), 按硬依赖 `Requires` 声明——本工具核心功能即硬件检查, 三者缺失会让采集结论不完整, 装不上时应显式暴露而非静默降级; 特殊场景可用 `rpm -ivh --nodeps` 绕过。`smartctl` 代码里无引用故不声明, `dos2unix` 仅打包期使用不该进运行期依赖
 11. fix(rpm): `%post` 的部署清单不再把 `/bin/<tool>` 上的系统软链记为 `LINK`(系统自带软链会被 `install.sh` 的 `\cp` 穿透改写目标, 软链本身却留存), 改为只记录"常规文件且指纹与本包自带二进制一致"的条目, 消除 `%preun` 误删系统同名软链的路径
 
 ## Version=2.1.5

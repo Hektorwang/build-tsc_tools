@@ -20,9 +20,9 @@ usage: tsc --tsc_collect_sar [install|compare|uninstall] [参数]
 
 对比给定的两个时间点的系统资源使用情况
 
-1. 修改 sar 取值频率,修改为 1 分钟一次;并备份 sa 文件到/var/log/tsc/CollectSar/BackSar/目录下;
+1. 修改 sar 取值频率,修改为 1 分钟一次;并备份 sa 文件到/var/log/tsc/tsc_collect_sar/BackSar/目录下;
 2. 以小时为单位,对比指定日期同时间段的 CPU,内存,磁盘 IO,网络(通讯口)的比率;
-3. 将对比结果输出到/var/log/tsc/CollectSar 目录下;
+3. 将对比结果输出到/var/log/tsc/tsc_collect_sar 目录下;
 
 用法
 
@@ -42,9 +42,9 @@ usage: tsc --tsc_collect_sar [install|compare|uninstall] [参数]
    ```
 
    PS: 最大对比跨度为 28 天;  
-   生成的 csv 文件在/var/log/tsc/CollectSar 目录下
+   生成的 csv 文件在/var/log/tsc/tsc_collect_sar 目录下
 
-3. 需要卸载则执行 uninstall 脚本,执行一次即可。卸载会将定时任务恢复,将/var/log/tsc/CollectSar 目录移动至/tmp 目录
+3. 需要卸载则执行 uninstall 脚本,执行一次即可。卸载会将定时任务恢复,将/var/log/tsc/tsc_collect_sar 目录移动至/tmp 目录
 
    ```bash
    source /home/tsc/tsc_profile
