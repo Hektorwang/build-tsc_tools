@@ -34,6 +34,16 @@ contents:
   - src: "@STAGE_DIR@/tsc_tools/"
     dst: /home/tsc/tsc_tools
 
+  # rag.md: 构建期版本只含本包模块; 安装/升级后由 %post 调用 gen_rag.sh 在目标机
+  # 重新生成, 才能把 tsc_python 等其他已安装工具的模块一起纳入。
+  # 以 %config(noreplace) 单独声明: 升级不用包内的 tools-only 版本覆盖目标机上
+  # 已合并的 rag (覆盖会造成"升完 tsc_tools 后 python 模块从 rag 里消失")。
+  # 注意 noreplace 不免除校验: rpm -V 会把它报为 S.5....T. c, 属预期
+  # (与 tsc_python 的 ansible base.yml 同一处理方式)。
+  - src: "@STAGE_DIR@/rag.md"
+    dst: /home/tsc/tsc_tools/rag.md
+    type: config|noreplace
+
 scripts:
   preinstall: "@STAGE_DIR@/rpm-scripts/preinstall"
   postinstall: "@STAGE_DIR@/rpm-scripts/postinstall"

@@ -17,7 +17,7 @@
 - tsc_iaas_info  
   检测系统IaaS信息  
   输出系统基本信息, 包括`处理器`, `内存`, `存储`, `操作系统版本`, `是否虚拟机`等, 并保存到 `/var/log/tsc_iaas_info.json`  
-  查看 readme.md  
+  查看 README.md  
 - tsc_sysinit  
   操作系统初始化工具  
   对于新装完操作系统的服务器进行初始化配置. 因为要修改系统配置, 必须用 `root` 权限执行.  
@@ -61,10 +61,12 @@ rpm -e tsc_tools
 - `/bin` 下由本包部署的二进制与别名软链(逐文件 sha256 校验, 与本包自带一致才删, 不误删系统同名命令或被用户改过的文件); RAID CLI(`sas3ircu`/`storcli64`/`arcconf`)同理
 - `/home/tsc/tsc_tools/bin` 与 `.installed_manifest`
 - `/root/.vimrc`(仍与本包版本一致才删, 用户改过则保留)及安装时备份的 `/root/.vimrc.tsc_tools.bak`
-- 本包 drop-in `/home/tsc/tsc_profile.d/01-tsc_tools-profile.sh`
+- 本包 drop-in `/home/tsc/tsc_profile.d/00-tsc_tools-profile.sh`
 - 包内文件由 RPM 文件清单自动删除; 残留空目录壳由 `%postun` `find -empty -delete` 清理(升级时跳过)
 
 卸载时保留: `/home/tsc/tsc_profile`(公共空入口)、`/home/tsc/tsc_profile.d/` 目录(其他工具的 drop-in)、`/var/log/tsc` 及运行期日志。
+
+`rag.md` 以 `%config(noreplace)` 声明: 包内的构建期版本只含本包模块, 升级不会被它覆盖; 安装/升级后由 `%post` 调用 `gen_rag.sh` 在目标机重建, 把已安装的其他工具(如 `tsc_python`)的模块一起纳入。因此 `rpm -V tsc_tools` 把 `rag.md` 报为 `S.5....T. c` 属预期(同 `tsc_python` 的 ansible `base.yml`), 不代表包损坏。
 
 ## 用法
 
@@ -89,7 +91,7 @@ tsc --tsc_sysinit --all --no-disable_firewall --sshd_port=3204
 
 tsc --help
 tsc --模块名 --help
-glow /home/tsc/tsc_tools/modules/模块名/readme.md
+glow /home/tsc/tsc_tools/modules/模块名/README.md
 ```
 
 ## 打包

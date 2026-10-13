@@ -30,6 +30,12 @@ readonly TSC_TOOLS_DIR="${TSC_HOME_DIR}/tsc_tools"
 readonly SOURCE_TSC_PROFILE="${TSC_TOOLS_DIR}/tsc_profile"
 readonly DEST_TSC_PROFILE="${TSC_HOME_DIR}/tsc_profile"
 readonly TSC_PROFILE_D_DIR="${TSC_HOME_DIR}/tsc_profile.d"
+readonly DROPIN_FILE="${TSC_PROFILE_D_DIR}/00-tsc_tools-profile.sh"
+# 旧命名的 drop-in 残留 (空格分隔的多个候选名):
+#   01-tsc_tools-profile.sh  与 tsc_python 同为 01- 前缀时期的名字,
+#                            本次改为 00- 让本包先于其他工具加载, 旧名需显式清理
+#                            (衍生文件不在 rpm 文件清单里, 升级不会被自动带走)
+readonly STALE_DROPIN="${TSC_PROFILE_D_DIR}/01-tsc_tools-profile.sh"
 readonly LOG_DIR="/var/log/tsc"
 readonly MANIFEST_FILE="${TSC_TOOLS_DIR}/.installed_manifest"
 
@@ -155,8 +161,57 @@ inject_profile() {
     else
         LOGINFO "${DEST_TSC_PROFILE} already exists, keep it"
     fi
-    \cp "${TSC_TOOLS_DIR}/profile" "${TSC_PROFILE_D_DIR}/01-tsc_tools-profile.sh"
-    LOGSUCCESS "Deployed drop-in ${TSC_PROFILE_D_DIR}/01-tsc_tools-profile.sh"
+
+    # 旧命名残留: 与本包新 drop-in 内容重复, 共存会让 TSC_MODULES_DIR 被追加两次
+    local stale
+    for stale in ${STALE_DROPIN}; do
+        [[ -e "${stale}" ]] || continue
+        rm -f "${stale}" && LOGWARNING "已删除旧命名 drop-in ${stale}"
+    done
+
+    \cp "${TSC_TOOLS_DIR}/profile" "${DROPIN_FILE}"
+    LOGSUCCESS "Deployed drop-in ${DROPIN_FILE}"
+}
+
+##################################################
+# 清理 modules/ 下的无主空目录壳
+#
+# 成因: 模块改名 (tsc_collectSar -> tsc_collect_sar) 或旧布局 (tsc_python 模块曾
+# 装在 tsc_tools/modules/ 下) 时, rpm 升级只删文件清单内的文件, 目录壳会作为
+# 无主目录留下来, 既不属任何包也不会被 find -empty -delete 带走 (该清理在
+# %postun, 而升级路径 $1>=1 会跳过)。
+# 只删完全空的目录, 有内容的一律不动, 安全。
+##################################################
+prune_empty_module_dirs() {
+    local modules_dir="${TSC_TOOLS_DIR}/modules" empty_dir
+    [[ -d "${modules_dir}" ]] || return 0
+    while IFS= read -r empty_dir; do
+        [[ -n "${empty_dir}" ]] || continue
+        rm -d "${empty_dir}" 2>/dev/null &&
+            LOGINFO "removed stale empty module dir: ${empty_dir}"
+    done < <(find "${modules_dir}" -mindepth 1 -maxdepth 1 -type d -empty -print)
+}
+
+##################################################
+# 重建 rag.md
+#
+# 必要性: 包内 rag.md 是构建期生成的, 只含本包模块; 且它以 %config(noreplace)
+# 声明, 升级时不会被包内版本覆盖。若不在此重建, 升级 tsc_tools 会把 tsc_python
+# 等已安装工具的模块从 rag.md 里抹掉, 直到下次装/升 tsc_python 才恢复。
+# gen_rag.sh 自行 source tsc_profile 取 TSC_MODULES_DIR, 无需在此喂变量。
+# 幂等; 失败只告警, 不阻断安装。
+##################################################
+rebuild_rag() {
+    if [[ ! -x "${TSC_TOOLS_DIR}/gen_rag.sh" ]]; then
+        LOGWARNING "${TSC_TOOLS_DIR}/gen_rag.sh 缺失, 跳过 rag.md 更新"
+        return 0
+    fi
+    if "${TSC_TOOLS_DIR}"/gen_rag.sh >/dev/null 2>&1; then
+        LOGSUCCESS "rag.md 已重建: ${TSC_TOOLS_DIR}/rag.md"
+    else
+        LOGWARNING "gen_rag.sh 执行失败, rag.md 未更新 (不影响安装完成)"
+    fi
+    return 0
 }
 
 ##################################################
@@ -188,8 +243,15 @@ mkdir -p "${TSC_PROFILE_D_DIR}"
 inject_profile
 
 # 4. 日志目录 (不属于包内容, 卸载时保留运行期日志)
+# 0750: 与 tsc_python 保持一致——日志可能含主机清单/凭据片段等敏感信息, 不放行 other 读
 mkdir -p "${LOG_DIR}"
-chmod 0755 "${LOG_DIR}"
+chmod 0750 "${LOG_DIR}"
+
+# 5. 清理 modules/ 下的无主空目录壳 (旧命名/旧布局遗留)
+prune_empty_module_dirs
+
+# 6. 重建 rag.md (须在 profile 之后, 使其取到含其他工具模块的 TSC_MODULES_DIR)
+rebuild_rag
 
 echo -e '\033[1;33m'
 echo "--------------------

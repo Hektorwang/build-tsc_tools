@@ -29,7 +29,9 @@ TSC_TOOLS_DIR="${TSC_HOME_DIR}/tsc_tools"
 DEST_TSC_PROFILE="${TSC_HOME_DIR}/tsc_profile"
 TSC_PROFILE_D_DIR="${TSC_HOME_DIR}/tsc_profile.d"
 MANIFEST_FILE="${TSC_TOOLS_DIR}/.installed_manifest"
-DROPIN_FILE="${TSC_PROFILE_D_DIR}/01-tsc_tools-profile.sh"
+DROPIN_FILE="${TSC_PROFILE_D_DIR}/00-tsc_tools-profile.sh"
+# 旧命名 (与 tsc_python 同为 01- 前缀时期), 一并回收避免遗留无主文件
+STALE_DROPIN="${TSC_PROFILE_D_DIR}/01-tsc_tools-profile.sh"
 
 # $1 为卸载后剩余的本包实例数: 0=真卸载, >=1=升级
 if [ "${1:-0}" != "0" ]; then
@@ -99,9 +101,11 @@ if [ -n "${vimrc_backup}" ] && [ -f "${vimrc_backup}" ] && [ ! -f /root/.vimrc ]
 fi
 
 # ---------- 4. 删除本包 drop-in (公共入口与 tsc_profile.d 目录保留) ----------
-if [ -f "${DROPIN_FILE}" ]; then
-    rm -f "${DROPIN_FILE}" && LOG "SUCCESS" "removed drop-in ${DROPIN_FILE}"
-fi
+for _dropin in "${DROPIN_FILE}" "${STALE_DROPIN}"; do
+    if [ -f "${_dropin}" ]; then
+        rm -f "${_dropin}" && LOG "SUCCESS" "removed drop-in ${_dropin}"
+    fi
+done
 
 rm -f "${MANIFEST_FILE}"
 

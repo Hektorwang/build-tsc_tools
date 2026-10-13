@@ -1,5 +1,5 @@
 # tsc_tools drop-in
-# 由 tsc_tools RPM 部署到 /home/tsc/tsc_profile.d/01-tsc_tools-profile.sh
+# 由 tsc_tools RPM 部署到 /home/tsc/tsc_profile.d/00-tsc_tools-profile.sh
 # 卸载本包时由 %preun 删除; tsc_profile 主入口与 tsc_profile.d 目录保留
 
 # PATH: 本包 bin 与主目录前置
@@ -8,6 +8,12 @@ if [[ ":$PATH:" != *":/home/tsc/tsc_tools/bin/:"* ]]; then
 fi
 
 # 模块目录: 各工具把自己的 modules 追加到 TSC_MODULES_DIR 末尾
-# 加载顺序=文件名排序(01- 在 02- 前)=变量内顺序=tsc 遍历顺序, 语义自洽
+# 加载顺序=文件名排序(00- 在 01- 前)=变量内顺序=tsc 遍历顺序, 语义自洽
 # 不同工具 modules 不重名, 无覆盖; 若需让某工具优先, 调小其 drop-in 前缀数字
-export TSC_MODULES_DIR="${TSC_MODULES_DIR:+${TSC_MODULES_DIR}:}/home/tsc/tsc_tools/modules"
+#
+# 去重守卫(必须): 本文件会被 source 多次 (嵌套 shell、脚本重复 source tsc_profile),
+# 无条件追加会让同一目录在变量里重复出现, gen_rag.sh 遍历时会把同一份 readme
+# 收录多次, rag.md 成倍膨胀。与 tsc_python 侧 drop-in 保持同一判重写法。
+if [[ ":${TSC_MODULES_DIR:-}:" != *":/home/tsc/tsc_tools/modules:"* ]]; then
+  export TSC_MODULES_DIR="${TSC_MODULES_DIR:+${TSC_MODULES_DIR}:}/home/tsc/tsc_tools/modules"
+fi

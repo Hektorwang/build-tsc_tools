@@ -14,7 +14,11 @@ if [[ -z "${IFNAME}" ]] || [[ "${IFNAME}" == "-h" ]] || [[ "${IFNAME}" == "--hel
     echo ""
     echo "e.g. $0 eth0"
     echo ""
-    glow "$(dirname "$0")/readme.md"
+    if [[ -t 1 ]] && command -v glow >/dev/null 2>&1; then
+        glow "$(dirname "$0")/README.md"
+    else
+        cat "$(dirname "$0")/README.md"
+    fi
     exit 0
 fi
 

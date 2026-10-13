@@ -116,6 +116,14 @@ mkdir -p "${STAGE_DIR}/rpm-scripts" "${STAGE_DIR}/tsc_tools/lib"
 \cp -r "${PROJECT_DIR}"/tsc_tools/. "${STAGE_DIR}"/tsc_tools/
 # gen_rag.sh 随包发布, 供目标机生成多工具合并 rag (source tsc_profile 后读 TSC_MODULES_DIR)
 \cp "${PROJECT_DIR}"/gen_rag.sh "${STAGE_DIR}"/tsc_tools/gen_rag.sh
+# rag.md 移出批量安装树: 它以 %config(noreplace) 单独声明, 留在 tsc_tools/ 下会和
+# 独立条目指向同一目标路径, 触发 nfpm content collision (同 tsc_python 的 base.yml)
+if [[ -f "${STAGE_DIR}/tsc_tools/rag.md" ]]; then
+    \mv "${STAGE_DIR}/tsc_tools/rag.md" "${STAGE_DIR}"/rag.md
+else
+    echo "ERROR: 未生成 ${STAGE_DIR}/tsc_tools/rag.md, gen_rag.sh 可能执行失败。" >&2
+    exit 1
+fi
 # env_check.sh 随包发布, 供 %post 复用同一份环境检测逻辑
 \cp "${PACKAGING_DIR}"/env_check.sh "${STAGE_DIR}"/tsc_tools/lib/env_check.sh
 

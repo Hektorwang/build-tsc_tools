@@ -130,7 +130,7 @@ function read_module_metadata() {
     local module_name="$1"
     local module_dir
     module_dir="$(_find_module_dir "${module_name}")" || return 1
-    local meta_file="${module_dir}/readme.md"
+    local meta_file="${module_dir}/README.md"
 
     if [[ -f "${meta_file}" ]]; then
         awk 'BEGIN{c=0} /^---$/{c++; if(c==1){next}; if(c==2){exit}} c==1' "${meta_file}" 
@@ -147,7 +147,7 @@ function show_global_help() {
     local meta description usage module
 
     # 关联数组遍历顺序不确定, 排序后输出保证帮助列表稳定
-    # 各 $(...) 加 || true: 缺少 readme.md / 缺 description 时命令替换非零,
+    # 各 $(...) 加 || true: 缺少 README.md / 缺 description 时命令替换非零,
     # 在 set -e 下会直接终止整个帮助输出
     while IFS= read -r module; do
         meta=$(read_module_metadata "${module}" 2>/dev/null || true)

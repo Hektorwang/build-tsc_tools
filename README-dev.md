@@ -24,7 +24,7 @@ release-note.md                     版本号来源(文件内第一个 `Version=
 tsc_tools/                          包内容(payload 源)
   func                              运行期公共库(LOG* 等)
   tsc_profile                       公共空入口(仅 source tsc_profile.d/*.sh, 卸载不删)
-  profile                           本包 drop-in(部署到 01-tsc_tools-profile.sh, 含 PATH / TSC_MODULES_DIR)
+  profile                           本包 drop-in(部署到 00-tsc_tools-profile.sh, 含 PATH / TSC_MODULES_DIR)
   lib/env_check.sh                  env_check.sh 的随包副本(构建时放入)
   packages/install.sh               安装期部署逻辑, 由 %post 调用
   packages/<tool>/<tool>-<arch>     自带二进制, <arch> ∈ {x86_64, aarch64, noarch}

@@ -19,8 +19,14 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 
+# 无论卸载还是升级都先回收 modules/ 下的空目录壳:
+# 升级时旧包的文件是在新包 %post 之后才被 rpm 删除的, 旧命名模块 (如 tsc_collectSar)
+# 的空壳刚好在此刻出现, %post 那次清理抓不到, 必须在这里补一刀。
+# 只删 modules/ 下**空**的一级子目录, 新包已就位的内容不受影响。
+find /home/tsc/tsc_tools/modules -mindepth 1 -maxdepth 1 -type d -empty -delete 2>/dev/null
+
 if [ "${1:-0}" != "0" ]; then
-    # 升级: 不清理, 新包 %post 会重建
+    # 升级: 整树不清, 新包已就位且 %post 会重建需要的东西
     exit 0
 fi
 

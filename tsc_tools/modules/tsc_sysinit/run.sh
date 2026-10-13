@@ -763,7 +763,13 @@ all_mode() {
 check_env || exit 255
 
 if [[ $# -eq 0 ]]; then
-    find "${WORK_DIR}" -type f -iname "readme.md" -exec glow {} +
+    # glow 传文件路径时进 TUI 模式, stdout 非 TTY (管道/重定向/输出被上层接管) 时静默输出空内容;
+    # 此处按 TTY 分流, 非交互式直接 cat 原文, 保证任何调用方式都能看到文档
+    if [[ -t 1 ]] && command -v glow >/dev/null 2>&1; then
+        find "${WORK_DIR}" -type f -iname "README.md" -exec glow {} +
+    else
+        find "${WORK_DIR}" -type f -iname "README.md" -exec cat {} +
+    fi
     exit 0
 fi
 

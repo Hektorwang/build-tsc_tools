@@ -16,7 +16,11 @@ case "$1" in
 		./uninstall.sh "$@"
 		;;
 	*)
-		glow "${WORK_DIR}"/readme.md
+		if [[ -t 1 ]] && command -v glow >/dev/null 2>&1; then
+			glow "${WORK_DIR}"/README.md
+		else
+			cat "${WORK_DIR}"/README.md
+		fi
 		;;
 esac
 

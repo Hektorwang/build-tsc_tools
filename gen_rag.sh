@@ -21,19 +21,55 @@ else
     modules_dirs="${TSC_MODULES_DIR:-${WORK_DIR}/modules}"
     RAG_FILE="${WORK_DIR}/rag.md"
 fi
+
+##################################################
+# 冒号分隔目录列表去重 (保持原顺序, 去掉重复项)
+#
+# 必要性: TSC_MODULES_DIR 由各工具 drop-in 各自追加, 任一环节被 source 两次
+# (嵌套 shell / 脚本重复 source tsc_profile) 就会出现重复目录; 不去重则同一份
+# readme 被 find 到多次, rag.md 成倍膨胀 (现场实测: 重复 5 次 -> 4132 行 vs 1026 行)。
+# 参数:
+#   $1 - 冒号分隔的目录列表
+# 输出: 去重后的冒号分隔列表
+##################################################
+dedup_dirs() {
+    local IFS=':' _d _out="" _arr=()
+    read -r -a _arr <<<"$1" || true
+    for _d in "${_arr[@]}"; do
+        [[ -n "${_d}" ]] || continue
+        [[ ":${_out}:" == *":${_d}:"* ]] && continue
+        _out="${_out:+${_out}:}${_d}"
+    done
+    printf '%s' "${_out}"
+}
+
+if [[ -n "${modules_dirs}" ]]; then
+    _deduped="$(dedup_dirs "${modules_dirs}")"
+    if [[ "${_deduped}" != "${modules_dirs}" ]]; then
+        echo "WARN: 模块目录列表含重复项, 已去重: ${modules_dirs}" >&2
+    fi
+    modules_dirs="${_deduped}"
+fi
+
 if [[ -z "${modules_dirs}" ]]; then
     echo "ERROR: no modules dir found under ${WORK_DIR}" >&2
     exit 1
 fi
 
 # 获取所有模块 readme (遍历 TSC_MODULES_DIR 冒号分隔的多目录, 适配多工具扩展)
+# 尾部 awk 去重: 兜住多目录互相包含等去重后仍会产出重复路径的情形
 mapfile -t readme_files < <(
     IFS=':'
     for _d in ${modules_dirs}; do
         [[ -d "$_d" ]] || continue
-        find "$_d" -iname 'readme.md'
-    done
+        find "$_d" -name 'README.md'
+    done | awk '!seen[$0]++'
 )
+
+if [[ ${#readme_files[@]} -eq 0 ]]; then
+    echo "ERROR: no README.md found under: ${modules_dirs}" >&2
+    exit 1
+fi
 
 # 处理readme文件, 去掉元数据, 并将其下的标题都下沉一级
 parse_readme() {

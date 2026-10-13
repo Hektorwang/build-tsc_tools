@@ -1,5 +1,16 @@
 # release-note
 
+## Version=2.1.8
+
+Date=20261013
+
+1. fix(rag): 修复 `rag.md` 成倍膨胀——`01-tsc_tools-profile.sh` 追加 `TSC_MODULES_DIR` 时无判重, 重复 `source tsc_profile`(嵌套 shell / 脚本已 source 过再调 `gen_rag.sh` / 在已 source 的终端里跑 `rpm -U`)会让同一模块目录在变量里重复出现, `gen_rag.sh` 遍历时把同一份 readme 收录多次(现场实测: 干净 1026 行 vs 膨胀后 4132 行, 元数据块重复 5 份)。三处同时收口: 本包 drop-in 增加判重守卫(与 `tsc_python` 侧同一写法)、`gen_rag.sh` 对目录列表与 readme 路径各做一次去重(保留原顺序)、readme 为空时报错而非静默产出空 rag
+2. fix(rag): 升级 tsc_tools 不再把其他工具的模块从 `rag.md` 里抹掉——包内 rag.md 是构建期生成的、只含本包模块, 原先 `%post` 不重建, 升级会用 tools-only 版本覆盖已合并的 rag, 直到下次装/升 `tsc_python` 才恢复。现 `rag.md` 改以 `%config(noreplace)` 单独声明(升级不被包内版本覆盖), 并由 `%post` 调用 `gen_rag.sh` 在目标机重建; 因此 `rpm -V tsc_tools` 报 `rag.md` 为 `S.5....T. c` 属预期(同 `tsc_python` 的 ansible `base.yml`)
+3. refactor(rpm): 本包 drop-in 改名 `01-tsc_tools-profile.sh` -> `00-tsc_tools-profile.sh`, 与 `01-tsc_python-profile.sh` 以数字前缀明确保序(不再依赖 `p` < `t` 的字母序巧合); `%post` 与 `%preun` 均清理旧名残留(衍生文件不在 rpm 文件清单里, 升级不会被自动带走)
+4. fix(rpm): `%post` 与 `%postun` 清理 `modules/` 下的无主空目录壳——模块改名(`tsc_collectSar` -> `tsc_collect_sar`)与旧布局(`tsc_python` 模块曾装在 `tsc_tools/modules/` 下)遗留的空目录既不属任何包也不会被回收; 只删**空**的一级子目录, 有内容的一律不动
+5. fix(rpm): `/var/log/tsc` 权限 0755 -> 0750, 与 `tsc_python` 统一(日志可能含主机清单/凭据片段等敏感信息, 不放行 other 读)
+6. fix(modules): tsc_tools 自带文档模块 (`tsc_sysinit`/`tsc_collect_sar`/`tsc_netspeed`) 的 run.sh 同样用 `glow <readme>` 展示说明, glow 传文件路径时进 TUI, 非 TTY (管道/重定向/输出被上层接管) 下静默空输出; 改为按 TTY 分流, 非交互式直接 `cat` 原文 (与 `tsc_python` 三个文档模块同款修法)。`tsc_sysinit` 的生成源 `run.m4` 一并修正
+
 ## Version=2.1.7
 
 1. refactor(rpm): `/home/tsc/tsc_profile` 拆为公共空入口(仅 `source tsc_profile.d/*.sh`), 本包配置移到 drop-in `tsc_tools/profile`(`%post` 部署到 `/home/tsc/tsc_profile.d/01-tsc_tools-profile.sh`, 含 PATH 与 `TSC_MODULES_DIR` 追加声明); 卸载只删本包 drop-in, 保留空入口与 `tsc_profile.d/` 目录, 为 `tsc_python` 等后续工具提供 drop-in 扩展点
@@ -101,7 +112,7 @@
 1. chore: 将 `jq` 从源码编译版替换为官方 release-1.8.1 二进制版
 2. fix: 修复安装 `arcconf` 时判断错误问题
 3. fix: 修复 `arcconf` 的raid卡的vd状态为 `InterimRecovery` 无法识别的问题, 将该状态识别为 `尝试临时恢复`
-4. feat(`gen_req.sh`): 生成 rag 友好的文档 `rag.md`, 同时更新所有模块的 readme.md, 删除 module.json, 并修改 tsc 遍历模块元数据的方式
+4. feat(`gen_req.sh`): 生成 rag 友好的文档 `rag.md`, 同时更新所有模块的 README.md, 删除 module.json, 并修改 tsc 遍历模块元数据的方式
 5. feat(`install.sh`): 增加 `ningos` 支持
 6. TODO: 将 `func` 替换为 `tsc_utils`
 7. TODO: 将 `tsc_iaas_info` 模块拆分, 以方便开发维护, 并增加处理器和内存变动告警
