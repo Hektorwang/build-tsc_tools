@@ -17,7 +17,14 @@ if [[ -d "${WORK_DIR}/tsc_tools" ]]; then
     modules_dirs="${WORK_DIR}/tsc_tools/modules"
     RAG_FILE="${WORK_DIR}/tsc_tools/rag.md"
 else
-    source /home/tsc/tsc_profile 2>/dev/null || true
+    _tsc_profile="/home/tsc/tsc_profile"
+    if [[ -f "${_tsc_profile}" ]]; then
+        if ! source "${_tsc_profile}" 2>/tmp/_gen_rag_source.err; then
+            echo "WARNING: source ${_tsc_profile} 失败, rag.md 可能只含本包模块: $(cat /tmp/_gen_rag_source.err 2>/dev/null)" >&2
+            rm -f /tmp/_gen_rag_source.err
+        fi
+        rm -f /tmp/_gen_rag_source.err
+    fi
     modules_dirs="${TSC_MODULES_DIR:-${WORK_DIR}/modules}"
     RAG_FILE="${WORK_DIR}/rag.md"
 fi

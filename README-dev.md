@@ -15,7 +15,7 @@ packaging/rpm/
   nfpm.yaml.tmpl                    nfpm 包定义模板(占位符 @VERSION@ @RELEASE@ @STAGE_DIR@)
   preinstall.sh.tmpl                %pre 模板, 内含 `# >>> INJECT <file>` 注入标记
   postinstall.sh                    %post  (部署二进制 + 写部署清单 + 注入 profile)
-  preremove.sh                      %preun (按 hash 清单回收 + 还原 vimrc)
+  preremove.sh                      %preun (按 .installed_manifest hash 回收 + 还原 vimrc; drop-in 为 00-)
   postremove.sh                     %postun (清理残留空目录壳, 升级跳过)
   env_check.sh                      环境检测与准入校验(单一事实源, %pre 内联 + 随包发布双用)
   lib_min.sh                        最小日志库(只供 %pre 内联, 不随包发布)
@@ -38,19 +38,19 @@ tsc_tools/                          包内容(payload 源)
 | 步骤 | 动作 |
 |---|---|
 | 1 | 依赖检查: `nfpm`(默认 `/bin/nfpm`, 可用 `NFPM_BIN` 覆盖) 与 `dos2unix`, 缺失即报错退出 |
-| 2 | 版本解析: 取 `release-note.md` 第一个 `Version=`; 含 `-` 直接报错(RPM Version 不允许) |
+| 2 | 版本解析: 取 `release-note.md` 第一个 `Version=`; `release` 取构建时间戳 `YYYYMMDDHHMMSS`; 含 `-` 直接报错(RPM Version 不允许) |
 | 3 | 运行 `gen_rag.sh` 生成 `tsc_tools/rag.md` |
-| 4 | 把 `README.md` / `release-note.md` / `.supported_env.conf` 拷进 `tsc_tools/`(见 §4.8) |
-| 5 | 复制 `tsc_tools/` → `stage/tsc_tools/`, 并把 `packaging/rpm/env_check.sh` 放到 `stage/tsc_tools/lib/` |
+| 4 | 复制 `tsc_tools/` → `stage/tsc_tools/`; 把项目根的 `README.md` / `release-note.md` / `.supported_env.conf` 覆盖进 stage(不写回源码树); 剔除 `**/tests/**`、`DESIGN.md`、`README_DEV.md`(全树范围, 见 §4.8) |
+| 5 | 把 `packaging/rpm/env_check.sh` 放到 `stage/tsc_tools/lib/`; 将 `rag.md` 移出批量树供 `%config(noreplace)` 单独声明 |
 | 6 | `stage` 内所有 `*.sh` 统一 `chmod +x` 并 `dos2unix` |
-| 7 | 渲染 `%pre`(`render_template` 把 `# >>> INJECT <file>` 换为该文件内容), 复制 `%post` / `%preun` / `%postun` |
+| 7 | 渲染 `%pre`(`render_template` 把 `# >>> INJECT <file>` 换为该文件内容), 复制 `%post` / `%preun` / `%postun`; 断言 `%pre` 含关键注入串 |
 | 8 | 对四个 scriptlet 逐个 `bash -n` 语法自检 |
 | 9 | 用 `sed` 渲染 `nfpm.yaml` 模板 |
 | 10 | `nfpm package --packager rpm` |
 | 11 | 产物自检: 包信息 / `Requires` / 文件数 / **两架构自带二进制是否齐全** / `tsc` 可执行位 / 四段 scriptlet 是否写入 |
 | 12 | 清理 `stage/`, 打印 `Size` 与 `SHA256` |
 
-产物: `release/tsc_tools-<version>-<release>.noarch.rpm`(`release` 取构建日期 `YYYYMMDD`)。
+产物: `release/tsc_tools-<version>-<release>.noarch.rpm`(`release` 取构建时间戳 `YYYYMMDDHHMMSS`)。
 
 ---
 
@@ -95,9 +95,17 @@ tsc_tools/                          包内容(payload 源)
 
 `%pre` **不**内联 `func`(只内联 `lib_min.sh`), 所以改 `func` 不影响安装准入。但 `func` 与 `lib_min.sh` 的 `LOG*` 必须保持同名同签名, 否则 `env_check.sh` 在 `%pre` / `%post` 下行为会分叉。
 
+`func` 里的 `LOG*`(`LOGINFO` 等)通过 `export -f` 导出, 子进程可以直接调用。但它们内部依赖 `__log`, 而 `__log` **也必须 `export -f`**, 否则子进程调用 `LOGINFO` 时会报 `__log: command not found`。当前实现已将 `__log` 一并导出:
+
+```bash
+export -f __log LOGDEBUG LOGINFO LOGSUCCESS LOGWARNING LOGERROR
+```
+
+改动 `LOG*` 或 `__log` 时, 确保两者始终在同一行 `export -f` 里, 不要漏掉 `__log`。模块 `run.sh` 经 `tsc` 分发器以子进程调用, 如果不 `source func`(文档展示型模块), 则只能依赖继承的导出函数——此时 `__log` 已导出, 不会报错。
+
 ### 4.4 版本号
 
-只改 `release-note.md` 顶部的 `Version=`, `release` 号自动取构建日期。**不能在版本号里用 `-`**。
+只改 `release-note.md` 顶部的 `Version=`, `release` 号自动取构建时间戳 `YYYYMMDDHHMMSS`(同日多次构建 NVR 可区分)。**不能在版本号里用 `-`**。
 
 ### 4.5 部署清单契约 `.installed_manifest`
 
@@ -115,23 +123,44 @@ tsc_tools/                          包内容(payload 源)
 
 ### 4.6 文件权限
 
-`build.sh` 只对 `*.sh` 做 `chmod +x`; `tsc`、`func`、`tsc_profile`、`profile`、`vimrc` 及各类配置的最终权限 = **源文件 mode & 打包机 umask**。产物自检只断言 `/home/tsc/tsc_tools/tsc` 一个文件可执行。
+`build.sh` 开头固定 `umask 022`，避免打包机 umask 收紧(如 `0077`)静默削掉权限。只对 `*.sh` 与 `tsc` 显式 `chmod +x`; 其余文件最终权限 = **源文件 mode & umask**。产物自检只断言 `/home/tsc/tsc_tools/tsc` 一个文件可执行。
 
-> 打包机 umask 收紧(如 `0077`)会削掉其余文件权限且不报错。脚本内**未**固定 umask, 需要确定性时可在 `build.sh` 开头加 `umask 022`。
+### 4.7 `%pre` 注入与打包期断言
 
-### 4.7 `%pre` 的注入是静默的
+`render_template` 用 `awk ... getline` 读被注入文件, **文件不存在时静默输出空**。`build.sh` 在渲染后硬校验 `%pre` 含 `SUPPORTED_ARCHITECTURES=`、`is_element_in_array`、`check_env` 等关键串, 缺一即打包失败, 避免目标机在 `set -u` 下才暴露 unbound 变量。改动 `packaging/rpm/` 后请确认注入目标文件都存在。
 
-`render_template` 用 `awk ... getline` 读被注入文件, **文件不存在时静默输出空**。后果: 产出缺 `SUPPORTED_*` 的 `%pre`, 目标机在 `set -u` 下以 unbound 变量报错, 安装失败, 而**打包期毫无感知**(`bash -n` 查不出运行期错误)。
+### 4.8 `.supported_env.conf` 单一事实源与 stage 剪裁
 
-改动 `packaging/rpm/` 后请确认注入目标文件都存在; 想要硬保证, 可在渲染后加一段断言(检查 `%pre` 里出现 `SUPPORTED_ARCHITECTURES=`、`check_env()` 等关键串)。
+`.supported_env.conf` **只在项目根维护一份**(单一事实源): `%pre` 内联读这里; 打包时再 `\cp` 进 `stage/tsc_tools/`, 供安装后 `%post` `source`。源码树的 `tsc_tools/` 下**不再**保留副本(历史上的双份副本曾被 gitignore, 新克隆无法打包, 已取消)。
 
-### 4.8 打包会写回源码树
+`README.md` / `release-note.md` / `.supported_env.conf` 一律**只覆盖进 stage**, 不写回 `tsc_tools/` 源码树:
 
-`build.sh` 会把 `README.md` / `release-note.md` / `.supported_env.conf` 复制进 `tsc_tools/`。前两个在 `.gitignore` 里, 第三个**是被 git 跟踪的文件**——两份 `.supported_env.conf` 内容不一致时, 每次打包都会把工作树弄脏。
+```bash
+\cp -r "${PROJECT_DIR}"/tsc_tools/. "${STAGE_DIR}"/tsc_tools/   # 先整体拷
+\cp "${PROJECT_DIR}"/README.md       "${STAGE_DIR}"/tsc_tools/  # 再覆盖进 stage
+\cp "${PROJECT_DIR}"/release-note.md "${STAGE_DIR}"/tsc_tools/
+\cp "${PROJECT_DIR}"/.supported_env.conf "${STAGE_DIR}"/tsc_tools/
+```
+
+整体拷贝后会从 stage 剔除开发期产物(运行期无依赖): `**/tests/**`、`DESIGN.md`、`README_DEV.md`, **全树范围**(`find` 根为 `stage/tsc_tools`, 不限 `modules/`), 将来任何部位新增都不会漏进包。源码树里这些文件仍保留, 供本地开发自测。
+
+`build.sh` 在创建 `stage/` 前注册了 `EXIT trap`，无论打包成功还是中途失败都会自动清理 `stage/`，不会留下残留（与 `tsc_python/build.sh` 行为一致）：
+
+```bash
+trap 'rm -rf "${STAGE_DIR}"' EXIT
+```
 
 ### 4.9 产物不签名
 
 当前不做 GPG 签名, 产物 `SIGPGP=(none)`。裸 `rpm -ivh` 不受影响; 但走 dnf 仓库时 `gpgcheck=1`(默认)会**拒装未签名包**——上制品库前需要先补签名, 或在仓库配置里关掉 `gpgcheck`。
+
+### 4.10 `packages/install.sh` 二进制部署行为
+
+`_install` 函数按以下规则为每个 `SUPPORTED_BINARY_TOOLS` 中的工具选择二进制源：**`<tool>-$(arch)` 优先于 `<tool>-noarch`**，两者均不存在时打印 `LOGWARNING` 并跳过（不再静默），最终汇总 `missing_tools` 列表。
+
+部署到 `/home/tsc/tsc_tools/bin/<tool>` 后统一 `chmod 0755`（原先用 `chmod a+x`，在 umask 收紧时 other 执行位可能被清掉）。
+
+新增工具时只需把二进制放进 `packages/<tool>/` 并在 `SUPPORTED_BINARY_TOOLS` 里登记版本探测参数；删除工具后记得同步清理该数组（否则安装时会 WARNING 但不报错）。
 
 ---
 

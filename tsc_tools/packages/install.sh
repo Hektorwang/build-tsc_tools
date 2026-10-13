@@ -78,14 +78,22 @@ _install() {
     local tool_name failed_tools=() installed_tools=() missing_tools=()
     mkdir -p /home/tsc/tsc_tools/bin/
     for tool_name in "${!SUPPORTED_BINARY_TOOLS[@]}"; do
-        if [[ -f "${BINARY_TOOLS_DIR}"/"${tool_name}"/"${tool_name}-noarch" ]]; then
-            \cp "${BINARY_TOOLS_DIR}/${tool_name}/${tool_name}-noarch" /home/tsc/tsc_tools/bin/"${tool_name}"
-            chmod a+x /home/tsc/tsc_tools/bin/"${tool_name}"
+        local bin_src=""
+        if [[ -f "${BINARY_TOOLS_DIR}/${tool_name}/${tool_name}-$(arch)" ]]; then
+            bin_src="${BINARY_TOOLS_DIR}/${tool_name}/${tool_name}-$(arch)"
+        elif [[ -f "${BINARY_TOOLS_DIR}/${tool_name}/${tool_name}-noarch" ]]; then
+            bin_src="${BINARY_TOOLS_DIR}/${tool_name}/${tool_name}-noarch"
         fi
-        if [[ -f "${BINARY_TOOLS_DIR}"/"${tool_name}"/"${tool_name}-$(arch)" ]]; then
-            \cp "${BINARY_TOOLS_DIR}/${tool_name}/${tool_name}-$(arch)" /home/tsc/tsc_tools/bin/"${tool_name}"
-            chmod a+x /home/tsc/tsc_tools/bin/"${tool_name}"
+
+        if [[ -z "${bin_src}" ]]; then
+            LOGWARNING "binary missing for ${tool_name} ($(arch) / noarch), skip install"
+            missing_tools+=("${tool_name}")
+            continue
         fi
+
+        \cp "${bin_src}" /home/tsc/tsc_tools/bin/"${tool_name}"
+        chmod 0755 /home/tsc/tsc_tools/bin/"${tool_name}"
+
         if ! "${tool_name}" "${SUPPORTED_BINARY_TOOLS[${tool_name}]}" &>/dev/null; then
             \cp /home/tsc/tsc_tools/bin/"${tool_name}" /bin/"${tool_name}"
             installed_tools+=("${tool_name}")
@@ -93,6 +101,9 @@ _install() {
     done
     if [[ ${#installed_tools[@]} -gt 0 ]]; then
         LOGSUCCESS "Installed tools: ${installed_tools[*]}"
+    fi
+    if [[ ${#missing_tools[@]} -gt 0 ]]; then
+        LOGWARNING "Missing binaries (not installed): ${missing_tools[*]}"
     fi
     _install_vimrc
 }

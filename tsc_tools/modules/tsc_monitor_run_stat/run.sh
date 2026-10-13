@@ -125,6 +125,12 @@ if [ $# -ne 3 ]; then
     exit 0
 fi
 
+# --help / -h: 展示 README 后退出 (在参数数量判断之后，避免与无参时的 usage 重叠)
+if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
+    usage
+    exit 0
+fi
+
 mode="$1"
 process_pattern="$2"
 delay_interval="$3"

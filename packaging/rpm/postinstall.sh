@@ -9,7 +9,8 @@
 # 职责 (沿用 makeself 时代 install.sh 的 _install 行为):
 #   1. 部署自带二进制到 /home/tsc/tsc_tools/bin 与 /bin, 探测式安装 RAID CLI, 写入 /root/.vimrc
 #   2. 记录部署清单 .installed_manifest, 供 %preun 精确回收
-#   3. 注入/刷新 /home/tsc/tsc_profile 的 TSC_TOOLS 块, 并准备 tsc_profile.d 目录
+#   3. 部署 /home/tsc/tsc_profile 公共入口 (仅缺失时创建, 不覆盖) 与本包 drop-in
+#      00-tsc_tools-profile.sh (升级刷新), 清理旧命名 01- 残留, 并准备 tsc_profile.d 目录
 #   4. 准备 /var/log/tsc 日志目录
 ##################################################
 # shellcheck disable=SC1090,SC1091,SC2034

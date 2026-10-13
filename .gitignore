@@ -5,9 +5,5 @@ __pycache__
 /stage
 /tmp
 rag.md
-/tsc_tools/README.md
-/tsc_tools/release-note.md
-# build.sh 构建期从项目根复制进 tsc_tools/ 的生成副本, 与根下单一来源保持一致
-/tsc_tools/.supported_env.conf
 storcli.log
 !.gitignore

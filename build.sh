@@ -4,7 +4,7 @@
 #
 # 产出: release/tsc_tools-<version>-<release>.noarch.rpm
 #   version 取自 release-note.md 的 Version=
-#   release 取构建日期 YYYYMMDD
+#   release 取构建时间戳 YYYYMMDDHHMMSS (同日多次构建 NVR 可区分)
 #
 # 打包机依赖:
 #   nfpm      RPM 打包工具 (默认 /bin/nfpm, 可用 NFPM_BIN 覆盖)
@@ -58,8 +58,7 @@ echo "Using packager: ${NFPM_BIN} (nfpm ${NFPM_VERSION:-unknown})"
 # 定义版本和日期变量
 ##################################################
 version="$(awk -F '=' '/Version=/{print $2;exit}' <"${PROJECT_DIR}"/release-note.md)"
-createdate="$(date "+%Y%m%d")"
-release="${createdate}"
+release="$(date "+%Y%m%d%H%M%S")"
 
 # RPM 的 Version 不允许出现 '-', 提前拦下非法版本号
 if [[ -z "${version}" ]]; then
@@ -103,6 +102,8 @@ render_template() {
 ##################################################
 # 清理并创建打包源目录
 ##################################################
+# EXIT trap: 成功/失败路径均清理 stage/, 与 tsc_python/build.sh 保持一致
+trap 'rm -rf "${STAGE_DIR}"' EXIT
 rm -rf "${STAGE_DIR}"
 mkdir -p "${STAGE_DIR}/rpm-scripts" "${STAGE_DIR}/tsc_tools/lib"
 
@@ -110,10 +111,12 @@ mkdir -p "${STAGE_DIR}/rpm-scripts" "${STAGE_DIR}/tsc_tools/lib"
 "${PROJECT_DIR}"/gen_rag.sh
 
 # 将需要打包的文件和目录复制到临时目录
-\cp "${PROJECT_DIR}"/README.md "${PROJECT_DIR}"/tsc_tools/
-\cp "${PROJECT_DIR}"/release-note.md "${PROJECT_DIR}"/tsc_tools/
-\cp "${PROJECT_DIR}"/.supported_env.conf "${PROJECT_DIR}"/tsc_tools/
+# README.md / release-note.md / .supported_env.conf 只拷进 stage, 不写回 tsc_tools/ 源码树
+# (.supported_env.conf 唯一事实源在项目根: %pre 内联读这里, 同时覆盖进 stage 供 %post source)
 \cp -r "${PROJECT_DIR}"/tsc_tools/. "${STAGE_DIR}"/tsc_tools/
+\cp "${PROJECT_DIR}"/README.md "${STAGE_DIR}"/tsc_tools/
+\cp "${PROJECT_DIR}"/release-note.md "${STAGE_DIR}"/tsc_tools/
+\cp "${PROJECT_DIR}"/.supported_env.conf "${STAGE_DIR}"/tsc_tools/
 # gen_rag.sh 随包发布, 供目标机生成多工具合并 rag (source tsc_profile 后读 TSC_MODULES_DIR)
 \cp "${PROJECT_DIR}"/gen_rag.sh "${STAGE_DIR}"/tsc_tools/gen_rag.sh
 # rag.md 移出批量安装树: 它以 %config(noreplace) 单独声明, 留在 tsc_tools/ 下会和
@@ -124,6 +127,10 @@ else
     echo "ERROR: 未生成 ${STAGE_DIR}/tsc_tools/rag.md, gen_rag.sh 可能执行失败。" >&2
     exit 1
 fi
+# 开发期产物不进 RPM: 自测目录、设计/开发文档 (运行期无依赖)
+# 全树范围 (**/tests/** 等), 不限 modules/: 将来任何部位新增都不会漏进包
+find "${STAGE_DIR}/tsc_tools" -type d -name tests -prune -exec rm -rf {} +
+find "${STAGE_DIR}/tsc_tools" -type f \( -name 'DESIGN.md' -o -name 'README_DEV.md' \) -delete
 # env_check.sh 随包发布, 供 %post 复用同一份环境检测逻辑
 \cp "${PACKAGING_DIR}"/env_check.sh "${STAGE_DIR}"/tsc_tools/lib/env_check.sh
 

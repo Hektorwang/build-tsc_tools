@@ -1,25 +1,7 @@
 #!/bin/bash
 # 1.0.0 20210916
 # 1.0.1 20231213 适配FOS
-
-# Curdir=$(cd "$(dirname "$0")" && pwd) || exit 66
-
-#安装环境检测
-echo -n "Check OS "
-SysVersion=$(uname -r | grep -Eow 'el[67]|fos[0-9]+|ky[0-9]+' | head -n1)
-if [ "$SysVersion" == "el7" ]; then
-	echo -e "RHEL/CENTOS 7\033[60G[\033[1;32m  OK  \033[0m]"
-elif [ "$SysVersion" == "el6" ]; then
-	echo -e "RHEL/CENTOS 6\033[60G[\033[1;32m  OK  \033[0m]"
-elif [[ "$SysVersion" =~ "fos" ]]; then
-	echo -e "FitStarrySkyOS\033[60G[\033[1;32m  OK  \033[0m]"
-elif [ "$SysVersion" == "ky10" ]; then
-	echo -e "KylinOS10\033[60G[\033[1;32m  OK  \033[0m]"
-else
-	#echo "OS must be RHEL/CENTOS 6 or 7! exit"
-	echo -e "not RHEL/CENTOS 6/7 or FitStarrySkyOS or KylinOS10\033[60G[\033[1;31m ERROR \033[0m]"
-	exit 1
-fi
+# 1.0.2 20261013 移除 OS 门禁(由 RPM %pre 统一校验); rm -rf 加错误处理
 
 #sar信息采集器类型, 预定义 cron
 sar_collector="cron"
@@ -39,7 +21,13 @@ fi
 #创建报告生成文件夹
 [ ! -d /var/log/tsc/tsc_collect_sar ] && mkdir -p /var/log/tsc/tsc_collect_sar
 #创建sar历史文件保存目录
-[ -d /var/log/tsc/tsc_collect_sar/back_sar ] && /bin/rm -rf /var/log/tsc/tsc_collect_sar/back_sar
+# rm 失败时不能继续: 旧目录残留, 后续 cp 会把新旧文件混在一起, 备份数据被污染
+if [ -d /var/log/tsc/tsc_collect_sar/back_sar ]; then
+	if ! /bin/rm -rf /var/log/tsc/tsc_collect_sar/back_sar; then
+		echo -e "\033[31mERROR: 无法清理旧备份目录 /var/log/tsc/tsc_collect_sar/back_sar\033[0m"
+		exit 1
+	fi
+fi
 mkdir -p /var/log/tsc/tsc_collect_sar/back_sar
 #将当前的历史文件拷贝到/var/log/tsc/tsc_collect_sar/back_sar
 echo -n "Backup sar logfile"

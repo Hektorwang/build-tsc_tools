@@ -6,9 +6,20 @@ set -o pipefail   # If any command in a pipeline fails, the pipeline returns an 
 set +o posix      # Disable POSIX mode, allowing Bash-specific extensions (less portable)
 shopt -s nullglob # When no files match a glob pattern, expand to nothing instead of the pattern itself
 
+WORK_DIR="$(dirname "$(readlink -f "$0")")"
+
+# --help / -h: 展示 README 后退出
+if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
+    if [[ -t 1 ]] && command -v glow >/dev/null 2>&1; then
+        glow "${WORK_DIR}/README.md"
+    else
+        cat "${WORK_DIR}/README.md"
+    fi
+    exit 0
+fi
+
 MEM_USED_THRESHOLD="${1:-80}"
 
-WORK_DIR="$(dirname "$(readlink -f "$0")")"
 # 始终 source func, 不设 TSC_FUNC 守卫: 经 tsc 分发器调用时本脚本是子进程,
 # TSC_FUNC=true 只代表父进程加载过 func, 子进程仅继承被 export -f 的函数
 # (LOG* 有而 __log 无), 跳过 source 会在首次打日志时报 __log: command not found

@@ -114,8 +114,9 @@ detect_system_info() {
 # Global Variables:
 #   system_info (associative array, must be populated before calling)
 #   SUPPORTED_ARCHITECTURES, SUPPORTED_SERVICE_MANAGER, DISTRO_VERSION_RULES_*
+#   (由调用方 source .supported_env.conf 提供)
 # Parameters:
-#   None (config file path implicitly included via global variable SUPPORTED_ENV_FILE)
+#   None
 # Output:
 #   Detailed check result logs
 # Returns:

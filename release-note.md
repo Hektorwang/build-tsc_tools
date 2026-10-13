@@ -1,5 +1,21 @@
 # release-note
 
+## Version=2.1.9
+
+Date=20261013
+
+1. fix(func): `__log` 补 `export -f`——`LOG*` 函数通过 `export -f` 导出后子进程可调用, 但其内部依赖的 `__log` 未同步导出, 子进程直接调用 `LOGINFO` 等会报 `__log: command not found`; 现将 `__log` 与 `LOG*` 一并导出
+2. fix(modules): `tsc_drop_cache` 收到 `--help`/`-h` 时原先把参数当阈值传入, 触发"释放阈值必须为整数"报错; 现在 `--help`/`-h` 优先拦截, 展示 README 后退出。`tsc_monitor_run_stat` 收到 `--help`/`-h` 时原先走 mode 校验报错; 现在同样拦截并显示 usage
+3. fix(packages/install.sh): 二进制不存在时从静默跳过改为 `LOGWARNING` 并 continue(缺失列表在末尾汇总输出); 部署权限从 `chmod a+x`(umask 收紧时 other 执行位可能被清掉) 改为 `chmod 0755`; 逻辑调整为 arch 优先 noarch、一次 cp, 不再两个 `if` 各自拷一遍
+4. fix(tsc_collect_sar/install.sh): 移除 OS 门禁(uname -r 匹配 el6/el7/fos/ky10)——准入校验由 RPM `%pre` 的 `env_check.sh` 统一处理, 子模块自行检测与主流程不同步且已滞后; 备份目录 `rm -rf` 失败时从静默继续改为报错退出(避免新旧文件混入备份)
+5. fix(tsc_collect_sar/compare.sh): `sar -n DEV` 网络列(rxkB/s / txkB/s, 最大值与平均值共 8 处)从硬编码列号 `$6`/`$7` 改为 awk 先从表头行按列名定位列号再取值, 兼容新旧 sysstat 版本(新版在前面插入额外列导致列号偏移)
+6. fix(build.sh): 打包失败时 `stage/` 不再残留——在 `rm -rf stage/` 前注册 `trap 'rm -rf "${STAGE_DIR}"' EXIT`, 成功/失败路径统一回收(与 `tsc_python/build.sh` 保持一致)
+7. fix(gen_rag.sh): 目标机执行时区分 `tsc_profile` 不存在与 source 失败两种情况——文件不存在时静默用 fallback 目录(原有行为); 文件存在但 source 失败时打印 WARNING 到 stderr, 提示用户 rag.md 可能不完整
+8. refactor(build): `.supported_env.conf` 只保留项目根为单一事实源——打包时拷进 `stage/` 供 `%post` source; 删除源码树 `tsc_tools/` 下副本, 并清除 `.gitignore` 中三条构建副本忽略行(`/tsc_tools/README.md`、`/tsc_tools/release-note.md`、`/tsc_tools/.supported_env.conf`)——`build.sh` 已不再写回源码树, 留着会误导后人以为还要维护两份
+9. chore(build): `release` 号由构建日期 `YYYYMMDD` 改为构建时间戳 `YYYYMMDDHHMMSS`, 与 `tsc_python` 对齐, 同日多次构建 NVR 可区分
+10. chore(rpm): stage 剔除 `**/tests/**`、`DESIGN.md`、`README_DEV.md`, 不再打进 RPM(全树范围, 不限 `modules/`; 运行期无依赖, 源码树仍保留供开发自测)
+11. chore(docs): 修正过期注释与文档——`postinstall.sh` 头职责第 3 条由 2.1.6 时代"注入 `TSC_TOOLS` 块"改述为 drop-in 模型(2.1.7 起实际行为); `env_check.sh` 去掉不存在的 `SUPPORTED_ENV_FILE` 表述; README-dev §4.8 去掉从未存在的 `cmp` 描述并将剪裁范围同步为全树; 顺手清理上次旧 `build.sh` 留在源码树的 `tsc_tools/{README.md,release-note.md,rag.md}` 残留副本
+
 ## Version=2.1.8
 
 Date=20261013

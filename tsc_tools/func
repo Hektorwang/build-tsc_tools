@@ -73,7 +73,7 @@ LOGSUCCESS() { __log "SUCCESS" "$@"; }
 LOGWARNING() { __log "WARNING" "$@"; }
 LOGERROR() { __log "ERROR" "$@"; }
 
-export -f LOGDEBUG LOGINFO LOGSUCCESS LOGWARNING LOGERROR
+export -f __log LOGDEBUG LOGINFO LOGSUCCESS LOGWARNING LOGERROR
 
 #######################################
 # 删除前导和末尾的空白字符 (纯 bash 实现, str_strip 的退化/快速路径)
@@ -172,6 +172,7 @@ function get_ini_value() {
             next
         }
         in_section && $0 ~ "^[[:space:]]*"key"[[:space:]]*=" {
+            # 只去掉 key= 前缀, 保留 value 中可能含有的 = (如 URL 查询参数)
             sub("^[[:space:]]*"key"[[:space:]]*=[[:space:]]*", "", $0)
             gsub(/[[:space:]]+$/, "", $0)
             print $0

@@ -151,10 +151,16 @@ do
 	fi
 
 	#计算网络输入输出最大值
-	rxnet1_max="$(sar -f "${date1_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | grep "${netname}" | head -n -1 | awk '{print $6}' | sort -n | tail -n 1)"
-	txnet1_max="$(sar -f "${date1_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | grep "${netname}" | head -n -1 | awk '{print $7}' | sort -n | tail -n 1)"
-	rxnet2_max="$(sar -f "${date2_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | grep "${netname}" | head -n -1 | awk '{print $6}' | sort -n | tail -n 1)"
-	txnet2_max="$(sar -f "${date2_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | grep "${netname}" | head -n -1 | awk '{print $7}' | sort -n | tail -n 1)"
+	# sar -n DEV 各列在不同 sysstat 版本下位置不同 (新版插入了额外列):
+	# 用列名 (rxkB/s txkB/s) 定位列号, 再按列号取值, 兼容新旧版本
+	rxnet1_max="$(sar -f "${date1_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | \
+		awk -v iface="${netname}" 'NR==1{for(c=1;c<=NF;c++){if($c=="rxkB/s") rx=c}} NR>1 && $2==iface{print $rx}' | sort -n | tail -n 1)"
+	txnet1_max="$(sar -f "${date1_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | \
+		awk -v iface="${netname}" 'NR==1{for(c=1;c<=NF;c++){if($c=="txkB/s") tx=c}} NR>1 && $2==iface{print $tx}' | sort -n | tail -n 1)"
+	rxnet2_max="$(sar -f "${date2_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | \
+		awk -v iface="${netname}" 'NR==1{for(c=1;c<=NF;c++){if($c=="rxkB/s") rx=c}} NR>1 && $2==iface{print $rx}' | sort -n | tail -n 1)"
+	txnet2_max="$(sar -f "${date2_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | \
+		awk -v iface="${netname}" 'NR==1{for(c=1;c<=NF;c++){if($c=="txkB/s") tx=c}} NR>1 && $2==iface{print $tx}' | sort -n | tail -n 1)"
 
 	[ ! -n "${rxnet1_max}" ] && rxnet1_max="null"
 	[ ! -n "${txnet1_max}" ] && txnet1_max="null"
@@ -170,10 +176,14 @@ do
 	fi
 
 	#计算网络输入输出平均值
-	rxnet1_avg="$(sar -f "${date1_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | grep "${netname}" | head -n -1 | awk 'BEGIN{s=0}{s+=$6}END{printf("%.2f\n", s/NR)}')"
-	txnet1_avg="$(sar -f "${date1_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | grep "${netname}" | head -n -1 | awk 'BEGIN{s=0}{s+=$7}END{printf("%.2f\n", s/NR)}')"
-	rxnet2_avg="$(sar -f "${date2_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | grep "${netname}" | head -n -1 | awk 'BEGIN{s=0}{s+=$6}END{printf("%.2f\n", s/NR)}')"
-	txnet2_avg="$(sar -f "${date2_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | grep "${netname}" | head -n -1 | awk 'BEGIN{s=0}{s+=$7}END{printf("%.2f\n", s/NR)}')"
+	rxnet1_avg="$(sar -f "${date1_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | \
+		awk -v iface="${netname}" 'NR==1{for(c=1;c<=NF;c++){if($c=="rxkB/s") rx=c}} NR>1 && $2==iface{s+=$rx; n++} END{if(n>0) printf("%.2f\n",s/n)}')"
+	txnet1_avg="$(sar -f "${date1_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | \
+		awk -v iface="${netname}" 'NR==1{for(c=1;c<=NF;c++){if($c=="txkB/s") tx=c}} NR>1 && $2==iface{s+=$tx; n++} END{if(n>0) printf("%.2f\n",s/n)}')"
+	rxnet2_avg="$(sar -f "${date2_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | \
+		awk -v iface="${netname}" 'NR==1{for(c=1;c<=NF;c++){if($c=="rxkB/s") rx=c}} NR>1 && $2==iface{s+=$rx; n++} END{if(n>0) printf("%.2f\n",s/n)}')"
+	txnet2_avg="$(sar -f "${date2_sa}" -s "${i}:00:00" -e "${i}:59:59" -n DEV | \
+		awk -v iface="${netname}" 'NR==1{for(c=1;c<=NF;c++){if($c=="txkB/s") tx=c}} NR>1 && $2==iface{s+=$tx; n++} END{if(n>0) printf("%.2f\n",s/n)}')"
 
 	[ ! -n "${rxnet1_avg}" ] && rxnet1_avg="null"
 	[ ! -n "${txnet1_avg}" ] && txnet1_avg="null"

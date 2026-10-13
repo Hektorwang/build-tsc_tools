@@ -90,7 +90,7 @@ tsc --tsc_sysinit --all --no-disable_firewall --sshd_port=3204
 # 查看帮助
 
 tsc --help
-tsc --模块名 --help
+tsc --模块名 --help  # --help 由模块自行处理: 文档展示型模块显示 README, 功能型模块显示参数说明
 glow /home/tsc/tsc_tools/modules/模块名/README.md
 ```
 
@@ -105,6 +105,6 @@ glow /home/tsc/tsc_tools/modules/模块名/README.md
 - `nfpm`(默认取 `/bin/nfpm`, 亦可在 `PATH` 中提供或用 `NFPM_BIN=/path/to/nfpm ./build.sh` 指定)
 - `dos2unix`
 
-版本号取自 `release-note.md` 顶部的 `Version=`, `release` 号取构建日期。RPM scriptlet 源码在 `packaging/rpm/`, 其中 `%pre` 由 `build.sh` 渲染生成(内联 `lib_min.sh`、`.supported_env.conf`、`env_check.sh`, 因其运行时包内文件尚未落盘)。
+版本号取自 `release-note.md` 顶部的 `Version=`, `release` 号取构建时间戳 `YYYYMMDDHHMMSS`(同日多次构建可区分)。RPM scriptlet 源码在 `packaging/rpm/`, 其中 `%pre` 由 `build.sh` 渲染生成(内联 `lib_min.sh`、`.supported_env.conf`、`env_check.sh`, 因其运行时包内文件尚未落盘)。
 
 开发/打包的流程、约定与注意事项见 [README-dev.md](README-dev.md)。
