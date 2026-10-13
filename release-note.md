@@ -15,6 +15,8 @@ Date=20261013
 9. chore(build): `release` 号由构建日期 `YYYYMMDD` 改为构建时间戳 `YYYYMMDDHHMMSS`, 与 `tsc_python` 对齐, 同日多次构建 NVR 可区分
 10. chore(rpm): stage 剔除 `**/tests/**`、`DESIGN.md`、`README_DEV.md`, 不再打进 RPM(全树范围, 不限 `modules/`; 运行期无依赖, 源码树仍保留供开发自测)
 11. chore(docs): 修正过期注释与文档——`postinstall.sh` 头职责第 3 条由 2.1.6 时代"注入 `TSC_TOOLS` 块"改述为 drop-in 模型(2.1.7 起实际行为); `env_check.sh` 去掉不存在的 `SUPPORTED_ENV_FILE` 表述; README-dev §4.8 去掉从未存在的 `cmp` 描述并将剪裁范围同步为全树; 顺手清理上次旧 `build.sh` 留在源码树的 `tsc_tools/{README.md,release-note.md,rag.md}` 残留副本
+12. fix(rpm): 支持矩阵补麒麟 V10——`kylin`/`neokylin` 在 `env_check.sh` 的 `DISTRO_VARIETY_MAP` 中归入 RedHat 家族, 而 `DISTRO_VERSION_RULES_RedHat` 只到 9, V10 (主版本 10) 会被 `%pre` 拒绝安装; `.supported_env.conf` 的 RedHat 规则增加 `10` (覆盖 `VERSION_ID` 为 `10`/`10.x` 的形态; 若现场 os-release 用 `V10` 字面量, 需另加规则)
+13. fix(func): `detect_system_info` 的 `$ID` 补默认值——`/etc/os-release` 缺 `ID` 字段时 `set -o nounset` 下会以 unbound variable 中断 (模块运行期与 `%post` 复用同一函数, `packaging/rpm/env_check.sh` 同修); 与 `VERSION_ID`/`ID_LIKE` 的防御写法对齐
 
 ## Version=2.1.8
 

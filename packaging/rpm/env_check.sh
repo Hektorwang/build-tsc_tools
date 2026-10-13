@@ -62,7 +62,7 @@ detect_system_info() {
     distribution_major_version="$(echo "$distribution_version" | cut -d. -f1)"
 
     local ids=()
-    [[ -n "$ID" ]] && ids+=("$ID")
+    [[ -n "${ID:-}" ]] && ids+=("${ID:-}")
     IFS=' ' read -ra id_likes <<<"${ID_LIKE:-}"
     ids+=("${id_likes[@]}")
 
